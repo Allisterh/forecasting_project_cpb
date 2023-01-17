@@ -106,7 +106,7 @@ library(randomForest)
 Unempl <- df[c(2)] 
 y_real <- df[316:434,2]
 horizons <- list(3, 6, 12, 18, 24)
-n_forecast <- 434-315 # Check timepoints for training and test set
+n_forecast <- 434-315 # Check timepoints for training and test set!
 
 Forecasting_function <- function(y, Z, n_forecast, horizons){
   y_Z <- cbind(y, Z)
