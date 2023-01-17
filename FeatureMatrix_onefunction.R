@@ -1,8 +1,8 @@
-#hoi
 #Clearing Environment
 rm(list=ls())
 
-#Importing Data
+## -- Importing Data --
+#Nikki:
 df <- read.csv("~/Documents/MSc Econometrics/Blok 3/Seminar/R code/data-eur2023.csv", row.names=1)
 
 ### ---- FEATURE ENGINEERING ----
