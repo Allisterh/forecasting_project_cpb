@@ -1,8 +1,8 @@
-#hoi
 #Clearing Environment
 rm(list=ls())
 
-#Importing Data
+## -- Importing Data --
+#Nikki:
 df <- read.csv("~/Documents/MSc Econometrics/Blok 3/Seminar/R code/data-eur2023.csv", row.names=1)
 
 ### ---- FEATURE ENGINEERING ----
@@ -11,11 +11,11 @@ X_t <- df[-c(1,2)] #Remove pubdate and dependent variable
 n_var <- ncol(X_t)
 T <- nrow(X_t)
 X_lags <- 4
-n_Factors <- 3
-F_lags <- 4
-P_MAF <- 12
-n_MAF <- 3
-P_MARX = 12
+n_Factors <- 3 
+F_lags <- 4 #Paper Coulombe (check)
+P_MAF <- 12 #Paper Coulombe
+n_MAF <- 3 #Paper Coulombe
+P_MARX <- 12 #Paper Coulombe
 
 ## - Feature Matrix (Total) -
 FeatureMatrix <- function(X_t, T, X_lags, n_var, n_Factors, F_lags, P_MAF, n_MAF, P_MARX){
@@ -192,21 +192,28 @@ Ylags_function <- function(Y, n_Ylags){
 
 Unempl_lags <- Ylags_function(Unempl, n_Ylags)
 
-# - RF: X - 
+# - RF (h=1): X - 
 Z <- X
 y_Z <- cbind(Unempl, Z)
 
-n_forecast <- 434-315
+n_forecast <- 434-315 # Check timepoints for training and test set
 y_forecast <- data.frame(matrix(ncol = 1, nrow = n_forecast))
 
+# loopen over horizons
 for (f in 1:n_forecast){
   y_Z_train <- y_Z[1:(315+f-1),]
   y_Z_test <- y_Z[315+f,]
   
+  # Random Forest
   X.rf <- randomForest(L2_LRHUTTTT ~ ., data = y_Z_train, ntree = 200, mtry = (ncol(Z)/3),
-                       importance = TRUE, na.action = na.omit)
-  y_forecast[f,] <- predict(X.rf, y_Z_test)
+                       importance = TRUE, na.action = na.omit) # Paper Coulombe (Appendix): ntree=200, mtry=#Z/3
+  RF_y_forecast[f,] <- predict(X.rf, y_Z_test) # Predictions
+  
+  # Boosted Trees
+  #X.BT <- ...
+  #BT_y_forecast[f,] <- ...
 }
+# In de horizon loop: RF_y_forecast_RMSE[f,2] <- ....
 
 # Plotting RF Forecast with Z=X
 y_real <- y_Z[316:434,1]
