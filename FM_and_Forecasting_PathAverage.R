@@ -103,7 +103,8 @@ n_combinations <- 15
 library(randomForest)
 Unempl <- df[c(2)] 
 y_real <- df[316:434,2]
-horizons <- list(3, 6, 12, 18, 24)
+#horizons <- list(3, 6, 12, 18, 24)
+horizons <- list(3, 6)
 n_forecast <- 434-315 # Check timepoints for training and test set!
 
 Forecasting_PA_function <- function(y, Z, n_forecast, horizons){
@@ -114,22 +115,22 @@ Forecasting_PA_function <- function(y, Z, n_forecast, horizons){
   i <- 0
   for (h in horizons){
     i <- i+1
-    RF_iterated_forecast <- data.frame(matrix(ncol = 1, nrow = h))
+    RF_iterated_forecast <- data.frame(matrix(ncol = i, nrow = h))
     for (f in 1:n_forecast){
-      for (n in 1:seq(1,h,1)){
+      for (n in 1:h){
         y_Z_train <- y_Z[1:(315+f-h),]
         y_Z_test <- y_Z[315+f-h+n,]
         
         # Random Forest
         X.rf <- randomForest(L2_LRHUTTTT ~ ., data = y_Z_train, ntree = 200, mtry = (ncol(Z)/3),
                              importance = TRUE, na.action = na.omit) # Paper Coulombe (Appendix): ntree=200, mtry=#Z/3
-        RF_iterated_forecast[n] <- predict(X.rf, y_Z_test) # Predictions
+        RF_iterated_forecast[n,i] <- predict(X.rf, y_Z_test) # Predictions
         
         # Boosted Trees
         #X.BT <- ...
         #BT_y_forecast[f,] <- ...
       }
-      RF_y_forecast[f,i] <- mean(RF_iterated_forecast)
+      RF_y_forecast[f,i] <- mean(RF_iterated_forecast[,i])
     }  
     colnames(RF_y_forecast)[i]=paste('h=',h,sep='')
   }
