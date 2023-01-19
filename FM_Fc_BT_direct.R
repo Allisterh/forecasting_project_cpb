@@ -117,7 +117,6 @@ Forecasting_function <- function(y, Z, n_forecast, horizons){
   for (h in horizons){
     i <- i+1
     for (f in 1:n_forecast){
-    #for (f in 1:3){
       # Boosted Trees
       train_x <- y_Z[1:(315+f-h),2:ncol(y_Z)]
       train_y <- y_Z[1:(315+f-h),1]
