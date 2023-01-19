@@ -114,6 +114,7 @@ Forecasting_PA_function <- function(y, Z, n_forecast, horizons){
   i <- 0
   for (h in horizons){
     i <- i+1
+    RF_iterated_forecast <- data.frame(matrix(ncol = 1, nrow = h))
     for (f in 1:n_forecast){
       for (n in 1:seq(1,h,1)){
         y_Z_train <- y_Z[1:(315+f-h),]
@@ -122,13 +123,13 @@ Forecasting_PA_function <- function(y, Z, n_forecast, horizons){
         # Random Forest
         X.rf <- randomForest(L2_LRHUTTTT ~ ., data = y_Z_train, ntree = 200, mtry = (ncol(Z)/3),
                              importance = TRUE, na.action = na.omit) # Paper Coulombe (Appendix): ntree=200, mtry=#Z/3
-        RF_iterated_forecast[n,i] <- predict(X.rf, y_Z_test) # Predictions
+        RF_iterated_forecast[n] <- predict(X.rf, y_Z_test) # Predictions
         
         # Boosted Trees
         #X.BT <- ...
         #BT_y_forecast[f,] <- ...
       }
-      RF_y_forecast[f,i] <- mean(RF_iterated_forecast[,i])
+      RF_y_forecast[f,i] <- mean(RF_iterated_forecast)
     }  
     colnames(RF_y_forecast)[i]=paste('h=',h,sep='')
   }
@@ -211,8 +212,8 @@ RMSE_PA_RF[13,] <- RMSE_function(y_real, RF_PA_X_MAF_MARX_forecast)
 RMSE_PA_RF[14,] <- RMSE_function(y_real, RF_PA_F_MAF_MARX_forecast)
 RMSE_PA_RF[15,] <- RMSE_function(y_real, RF_PA_X_F_MAF_MARX_forecast)
 
-rownames(RMSE_RF) <- c("X", "F", "MAF", "MARX", "X,F", "X,MAF", "X,MARX", "F,MAF", "F,MARX", "MAF,MARX", "X,F,MAF", "X,F,MARX", "X,MAF,MARX", "F,MAF,MARX", "X,F,MAF,MARX")
-colnames(RMSE_RF) <- c("h=3", "h=6", "h=12", "h=18", "h=24")
+rownames(RMSE_PA_RF) <- c("X", "F", "MAF", "MARX", "X,F", "X,MAF", "X,MARX", "F,MAF", "F,MARX", "MAF,MARX", "X,F,MAF", "X,F,MARX", "X,MAF,MARX", "F,MAF,MARX", "X,F,MAF,MARX")
+colnames(RMSE_PA_RF) <- c("h=3", "h=6", "h=12", "h=18", "h=24")
 
 # Saving Prediction Tables
 write.csv(RF_PA_X_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/RF_PA_X_forecast.csv", row.names=FALSE)
