@@ -8,6 +8,7 @@ library(cowplot)
 
 data = read.csv("D:/EUR/Master/Seminar Case studies in Applied Econometrics/data-eur2023.csv", sep=';',row.names = 1)
 
+
 plot(data$L1_BCCI)
 L = sqrt(nrow(data))
 L = 50
@@ -139,9 +140,9 @@ plot(SSA_AEXVOL, type = "paired", idx = 1:20, plot.contrib = FALSE)
 dev.off()
 
 SSA_transformation = function(df,nrgroups,L,automaticgrouping = TRUE) { # Dates need to be the first column
-  ssa_transformed = df[1:315,1]
+  ssa_transformed <- df[,1]
   for (i in 2:ncol(df)) {
-    Y <- ssa(df[1:315,i],L,neig = 50 ,kind = "1d-ssa")
+    Y <- ssa(df[,i],L,neig = 50 ,kind = "1d-ssa")
     g <- grouping.auto(Y, grouping.method = "wcor", method = "average", nclust = nrgroups)
     recon = reconstruct(Y, groups = g)
     for (j in 1:length(g)) {
@@ -149,11 +150,26 @@ SSA_transformation = function(df,nrgroups,L,automaticgrouping = TRUE) { # Dates 
       colnames(newdf) = paste('SSA',colnames(df)[i],j,sep='_')
       ssa_transformed = cbind(ssa_transformed,newdf)
     }
+    # print(paste("Total variance of group", colnames(df)[i],":",(sum(Y$sigma[g[[1]]])+sum(Y$sigma[g[[2]]])+sum(Y$sigma[g[[3]]]))/sum(Y$sigma),sep = ' '))
   }
   return(ssa_transformed)
 }
 
-testeru = SSA_transformation(data,3,L)
+sum(U$sigma[1:3])
+g <- grouping.auto(U, grouping.method = "wcor", method = "average", nclust = 15)
+for (i in 1:10) {print(g[[i]])}
+
+for (k in 0:119){
+  testeru = SSA_transformation(data[1:315+k,],10,L)
+  if (k==0) {
+    newset = testeru
+  } else {
+    newset = rbind(newset, testeru[315+k,])
+    }
+}
+testeru = SSA_transformation(data[1:316,],10,L)
+
+# compare with principal components
 varlag = as.data.frame(shift(data$L2_LRHUTTTT,n=0:12, type = 'lag', give.names=TRUE))
 pcacheck <- prcomp(na.omit(varlag), center = TRUE, scale. = TRUE)$x
 par(mfrow = c(2,2))
