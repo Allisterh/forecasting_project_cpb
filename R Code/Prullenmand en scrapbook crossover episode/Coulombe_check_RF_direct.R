@@ -149,13 +149,97 @@ Z <- X
 RF_X_forecast <- Forecasting_function(UNRATE, Z, n_forecast, horizons)
 
 Z <- F
-RF_F_forecast <- Forecasting_function(Unempl, Z, n_forecast, horizons)
+RF_F_forecast <- Forecasting_function(UNRATE, Z, n_forecast, horizons)
 
 Z <- MAF
-RF_MAF_forecast <- Forecasting_function(Unempl, Z, n_forecast, horizons)
+RF_MAF_forecast <- Forecasting_function(UNRATE, Z, n_forecast, horizons)
 
 Z <- MARX
-RF_MARX_forecast <- Forecasting_function(Unempl, Z, n_forecast, horizons)
+RF_MARX_forecast <- Forecasting_function(UNRATE, Z, n_forecast, horizons)
 
 Z <- X_F
-RF_X_F_forecast <- Forecasting_function(Unempl, Z, n_forecast, horizons)
+RF_X_F_forecast <- Forecasting_function(UNRATE, Z, n_forecast, horizons)
+
+Z <- X_MAF
+RF_X_MAF_forecast <- Forecasting_function(UNRATE, Z, n_forecast, horizons)
+
+Z <- X_MARX
+RF_X_MARX_forecast <- Forecasting_function(Unempl, Z, n_forecast, horizons)
+
+Z <- F_MAF
+RF_F_MAF_forecast <- Forecasting_function(Unempl, Z, n_forecast, horizons)
+
+Z <- F_MARX
+RF_F_MARX_forecast <- Forecasting_function(UNRATE, Z, n_forecast, horizons)
+
+Z <- MAF_MARX
+RF_MAF_MARX_forecast <- Forecasting_function(Unempl, Z, n_forecast, horizons)
+
+Z <- X_F_MAF
+RF_X_F_MAF_forecast <- Forecasting_function(Unempl, Z, n_forecast, horizons)
+
+Z <- X_F_MARX
+RF_X_F_MARX_forecast <- Forecasting_function(Unempl, Z, n_forecast, horizons)
+
+Z <- X_MAF_MARX
+RF_X_MAF_MARX_forecast <- Forecasting_function(Unempl, Z, n_forecast, horizons)
+
+Z <- F_MAF_MARX
+RF_F_MAF_MARX_forecast <- Forecasting_function(Unempl, Z, n_forecast, horizons)
+
+Z <- X_F_MAF_MARX
+RF_X_F_MAF_MARX_forecast <- Forecasting_function(Unempl, Z, n_forecast, horizons)
+
+## -- RMSE Function --
+RMSE_RF <- data.frame(matrix(ncol = length(horizons), nrow = n_combinations))
+
+RMSE_function <- function(actual, prediction){
+  RMSE <- data.frame(matrix(ncol = length(horizons), nrow = 1))
+  i <- 0
+  for (h in horizons){
+    i <- i+1
+    RMSE[1,i] <- sqrt(mean((actual - prediction[,i])^2))
+    colnames(RMSE)[i]=paste('h=',h,sep='')
+  }
+  return(RMSE)
+}
+
+RMSE_RF[1,] <- RMSE_function(y_real, RF_X_forecast)
+RMSE_RF[2,] <- RMSE_function(y_real, RF_F_forecast)
+RMSE_RF[3,] <- RMSE_function(y_real, RF_MAF_forecast)
+RMSE_RF[4,] <- RMSE_function(y_real, RF_MARX_forecast)
+RMSE_RF[5,] <- RMSE_function(y_real, RF_X_F_forecast)
+RMSE_RF[6,] <- RMSE_function(y_real, RF_X_MAF_forecast)
+RMSE_RF[7,] <- RMSE_function(y_real, RF_X_MARX_forecast)
+RMSE_RF[8,] <- RMSE_function(y_real, RF_F_MAF_forecast)
+RMSE_RF[9,] <- RMSE_function(y_real, RF_F_MARX_forecast)
+RMSE_RF[10,] <- RMSE_function(y_real, RF_MAF_MARX_forecast)
+RMSE_RF[11,] <- RMSE_function(y_real, RF_X_F_MAF_forecast)
+RMSE_RF[12,] <- RMSE_function(y_real, RF_X_F_MARX_forecast)
+RMSE_RF[13,] <- RMSE_function(y_real, RF_X_MAF_MARX_forecast)
+RMSE_RF[14,] <- RMSE_function(y_real, RF_F_MAF_MARX_forecast)
+RMSE_RF[15,] <- RMSE_function(y_real, RF_X_F_MAF_MARX_forecast)
+
+rownames(RMSE_RF) <- c("X", "F", "MAF", "MARX", "X,F", "X,MAF", "X,MARX", "F,MAF", "F,MARX", "MAF,MARX", "X,F,MAF", "X,F,MARX", "X,MAF,MARX", "F,MAF,MARX", "X,F,MAF,MARX")
+colnames(RMSE_RF) <- c("h=3", "h=6", "h=12", "h=18", "h=24")
+
+# Saving Prediction Tables
+write.csv(RF_X_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/Coulombe_RF_X_forecast.csv", row.names=FALSE)
+write.csv(RF_F_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/Coulombe_RF_F_forecast.csv", row.names=FALSE)
+write.csv(RF_MAF_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/Coulombe_RF_MAF_forecast.csv", row.names=FALSE)
+write.csv(RF_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/Coulombe_RF_MARX_forecast.csv", row.names=FALSE)
+write.csv(RF_X_F_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/Coulombe_RF_X_F_forecast.csv", row.names=FALSE)
+write.csv(RF_X_MAF_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/Coulombe_RF_X_MAF_forecast.csv", row.names=FALSE)
+write.csv(RF_X_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/Coulombe_RF_X_MARX_forecast.csv", row.names=FALSE)
+write.csv(RF_F_MAF_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/Coulombe_RF_F_MAF_forecast.csv", row.names=FALSE)
+write.csv(RF_F_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/Coulombe_RF_F_MARX_forecast.csv", row.names=FALSE)
+write.csv(RF_MAF_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/Coulombe_RF_MAF_MARX_forecast.csv", row.names=FALSE)
+write.csv(RF_X_F_MAF_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/Coulombe_RF_X_F_MAF_forecast.csv", row.names=FALSE)
+write.csv(RF_X_F_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/Coulombe_RF_X_F_MARX_forecast.csv", row.names=FALSE)
+write.csv(RF_X_MAF_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/Coulombe_RF_X_MAF_MARX_forecast.csv", row.names=FALSE)
+write.csv(RF_F_MAF_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/Coulombe_RF_F_MAF_MARX_forecast.csv", row.names=FALSE)
+write.csv(RF_X_F_MAF_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/Coulombe_RF_X_F_MAF_MARX_forecast.csv", row.names=FALSE)
+
+write.csv(RMSE_RF, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/RMSE_RF.csv", row.names=TRUE)
+
+
