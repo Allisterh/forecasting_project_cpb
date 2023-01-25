@@ -25,7 +25,7 @@ T <- nrow(new_df)
 X_t <- new_df
 X_lags <- 12
 n_Factors <- 3 
-F_lags <- 4 #Paper Coulombe (check)
+F_lags <- 4 #Paper Coulombe (check FREDMD: Coulombe gebruikt er 12, CPB wil er 4)
 P_MAF <- 12 #Paper Coulombe
 n_MAF <- 3 #Paper Coulombe
 P_MARX <- 12 #Paper Coulombe
@@ -123,11 +123,11 @@ n_combinations <- 15
 
 Unempl <- unemployment
 rownames(Unempl) <- as.data.frame(rownames(unemployment))
-y_real <- unemployment[251:706]
+y_real <- unemployment[251:762,]
 horizons <- list(3) #, 6, 12, 18, 24
-n_forecast <- 706-251 # Check timepoints for training and test set!
+n_forecast <- 706-251 # Coulombe time window frame 1980M1 - 2017M12
 
-Forecasting_function <- function(y, Z, n_forecast, horizons,ntrees){
+Forecasting_function <- function(y, Z, n_forecast, horizons,ntrees=200){
   RF_y_forecast <- data.frame(matrix(ncol = length(horizons), nrow = n_forecast))
   #BF_y_forecast <- ...
   i <- 0
@@ -194,7 +194,7 @@ Z <- MAF_MARX
 RF_MAF_MARX_forecast <- Forecasting_function(Unempl, Z, n_forecast, horizons)
 
 Z <- X_F_MAF
-RF_X_F_MAF_forecast <- Forecasting_function(Unempl, Z, n_forecast, horizons)
+RF_X_F_MAF_forecast <- Forecasting_function(Unempl, Z, n_forecast, horizons,200)
 
 Z <- X_F_MARX
 RF_X_F_MARX_forecast <- Forecasting_function(Unempl, Z, n_forecast, horizons)
@@ -206,10 +206,14 @@ Z <- F_MAF_MARX
 RF_F_MAF_MARX_forecast <- Forecasting_function(Unempl, Z, n_forecast, horizons)
 
 Z <- X_F_MAF_MARX
-RF_X_F_MAF_MARX_forecast <- Forecasting_function(Unempl, Z, n_forecast, horizons)
+RF_X_F_MAF_MARX_forecast <- Forecasting_function(Unempl, Z, n_forecast, horizons,200)
 
 ## -- RMSE Function --
-RMSE_RF <- data.frame(matrix(ncol = length(horizons), nrow = n_combinations))
+RMSE_RF <- data.frame(matrix(ncol = length(horizons), nrow = 3))
+
+
+# Compute benchmark AR(model)
+msft_ar <- arima(unemployment , order = c(1, 0, 0))
 
 RMSE_function <- function(actual, prediction){
   RMSE <- data.frame(matrix(ncol = length(horizons), nrow = 1))
@@ -222,7 +226,7 @@ RMSE_function <- function(actual, prediction){
   return(RMSE)
 }
 
-RMSE_RF[1,] <- RMSE_function(y_real, RF_X_forecast)
+RMSE_RF[1,] <- RMSE_function(y_real[1:455], RF_X_forecast[1:455,])
 RMSE_RF[2,] <- RMSE_function(y_real, RF_F_forecast)
 RMSE_RF[3,] <- RMSE_function(y_real, RF_MAF_forecast)
 RMSE_RF[4,] <- RMSE_function(y_real, RF_MARX_forecast)
@@ -232,11 +236,12 @@ RMSE_RF[7,] <- RMSE_function(y_real, RF_X_MARX_forecast)
 RMSE_RF[8,] <- RMSE_function(y_real, RF_F_MAF_forecast)
 RMSE_RF[9,] <- RMSE_function(y_real, RF_F_MARX_forecast)
 RMSE_RF[10,] <- RMSE_function(y_real, RF_MAF_MARX_forecast)
-RMSE_RF[11,] <- RMSE_function(y_real, RF_X_F_MAF_forecast)
+RMSE_RF[2,] <- RMSE_function(y_real[1:455], RF_X_F_MAF_forecast[1:455,])
 RMSE_RF[12,] <- RMSE_function(y_real, RF_X_F_MARX_forecast)
 RMSE_RF[13,] <- RMSE_function(y_real, RF_X_MAF_MARX_forecast)
 RMSE_RF[14,] <- RMSE_function(y_real, RF_F_MAF_MARX_forecast)
-RMSE_RF[15,] <- RMSE_function(y_real, RF_X_F_MAF_MARX_forecast)
+RMSE_RF[3,] <- RMSE_function(y_real[1:455], RF_X_F_MAF_MARX_forecast[1:455,])
+
 
 rownames(RMSE_RF) <- c("X", "F", "MAF", "MARX", "X,F", "X,MAF", "X,MARX", "F,MAF", "F,MARX", "MAF,MARX", "X,F,MAF", "X,F,MARX", "X,MAF,MARX", "F,MAF,MARX", "X,F,MAF,MARX")
 colnames(RMSE_RF) <- c("h=3", "h=6", "h=12", "h=18", "h=24")
@@ -258,8 +263,5 @@ write.csv(RF_X_MAF_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R
 write.csv(RF_F_MAF_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/RF_F_MAF_MARX_forecast.csv", row.names=FALSE)
 write.csv(RF_X_F_MAF_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/RF_X_F_MAF_MARX_forecast.csv", row.names=FALSE)
 
-write.csv(RMSE_RF, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/RMSE_RF.csv", row.names=TRUE)
-
-
-
+write.csv(RMSE_RF, "C:/Users/Gebruiker/Documents/GitHub/project_cpb/Data en Forecasts/Output/Coulombe/rmse_rf.csv", row.names=TRUE)
 

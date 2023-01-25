@@ -117,13 +117,16 @@ Forecasting_PA_function <- function(y, Z, n_forecast, horizons){
     i <- i+1
     RF_iterated_forecast <- data.frame(matrix(ncol = i, nrow = h))
     for (f in 1:n_forecast){
-      for (n in 1:h){
+      for (n in 1:h){ # Loop to predict every horizon step before averaging
         y_Z_train <- y_Z[1:(315+f-h),]
-        y_Z_test <- y_Z[315+f-h+n,]
+        y_Z_test <- y_Z[315+f-h+n,] 
         
         # Random Forest
-        X.rf <- randomForest(L2_LRHUTTTT ~ ., data = y_Z_train, ntree = 200, mtry = (ncol(Z)/3),
-                             importance = TRUE, na.action = na.omit) # Paper Coulombe (Appendix): ntree=200, mtry=#Z/3
+        X.rf <- randomForest(L2_LRHUTTTT ~ ., 
+                             data = y_Z_train, 
+                             ntree = 200, 
+                             mtry = (ncol(Z)/3),
+                             na.action = na.omit) # Paper Coulombe (Appendix): ntree=200, mtry=#Z/3
         RF_iterated_forecast[n,i] <- predict(X.rf, y_Z_test) # Predictions
         
         # Boosted Trees
