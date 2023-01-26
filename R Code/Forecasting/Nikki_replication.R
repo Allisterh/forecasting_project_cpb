@@ -33,7 +33,7 @@ P_MARX <- 12 #Paper Coulombe
 
 ## - X - 
 library(data.table)
-X <- function(regressor_matrix, X_lags){
+X_function <- function(regressor_matrix, X_lags){
   return(as.data.frame(shift(regressor_matrix,n=0:X_lags, type = 'lag', give.names=TRUE)))
 } 
 
@@ -86,7 +86,7 @@ MARX_function <- function(regressor_matrix, P_MARX, n_var) {
 }
 
 ## -- Combinations of Z --
-X <- X_function(regressor_matrix, X_lags, n_var)
+X <- X_function(regressor_matrix, X_lags)
 
 scaled_regressor_matrix <- scale(regressor_matrix) #Scale Regressor Matrix for PCA in F
 F <- F_function(scaled_regressor_matrix, n_Factors, F_lags, T, FALSE)
