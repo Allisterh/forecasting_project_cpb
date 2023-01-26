@@ -102,12 +102,16 @@ n_combinations <- 15
 # -- Forecasting Function -- 
 library(ParBayesianOptimization)
 library(doParallel)
+library(xgboost)
 
-Unempl <- df[c(2)] 
-y_real <- df[316:434,2]
-horizons <- list(3, 6, 12, 18, 24)
+#Unempl <- df[c(2)]  #Dutch
+Unempl <- unemployment #Coulombe
+#y_real <- df[316:434,2]
+y_real <- unemployment[251:705,] #Coulombe
+horizons <- list(3) #6, 12, 18, 24)
 #horizons <- list(3)
-n_forecast <- 434-315 # Check timepoints for training and test set!
+#n_forecast <- 434-315 # Check timepoints for training and test set!
+n_forecast <- 706-251 #Coulombe
 dutch_forecasts <- c(435,315)
 coulombe_forecasts <- c(706,251)
 
@@ -117,67 +121,65 @@ Forecasting_function <- function(y, Z, n_forecast, horizons){
   
   i <- 0
   for (h in horizons){
+    shift_y = as.data.frame(shift(y,n=h, type = 'lead', give.names=TRUE))
+    colnames(shift_y) = 'y'
+    y_Z <- cbind(shift_y, Z)
+    
     i <- i+1
+    
+    train_x <- y_Z[11:(250+1),2:ncol(y_Z)]
+    train_y <- y_Z[11:(250+1),1]
+    
+    #Optimization
+    set.seed(2021)
+    
+    scoring_function <- function(eta) {
+      library(xgboost)
+      dtrain <- xgb.DMatrix(as.matrix(train_x), label = as.matrix(train_y), missing = NA)
+      
+      pars <- list(eta = 0.3) #default, to be tuned
+      
+      xgbcv <- xgb.cv(
+        params = pars,
+        data = dtrain,
+        nfold = 5, #Coulombe
+        nrounds = 500, #Coulombe, max boosting rounds
+        prediction = TRUE,
+        showsd = TRUE,
+        early_stopping_rounds = 10,
+        maximize = FALSE, #TRUE --> FALSE : RMSE is error, so we minimize right?
+        stratified = FALSE) # Do we set this to TRUE or FALSE?
+      
+      return(list(
+        Score = min(xgbcv$evaluation_log$test_rmse_mean), #max --> min; we MINIMIZE RMSE right?
+        nrounds = xgbcv$best_iteration #iteration number with the best evaluation metric value
+      )
+      )
+    }
+    bounds <- list(eta = c(0, 1))
+    
+    opt_obj <- bayesOpt(FUN = scoring_function, bounds = bounds,
+                        initPoints = 3, #Must be more than number of input in scoring function
+                        iters.n = 2, #Number of Epochs, runs 2 times to find global optimum
+                        parallel = TRUE)
+    
+    # take the optimal parameters for xgboost()
+    print(getBestPars(opt_obj)[1])
+    params <- list(eta = getBestPars(opt_obj)[1])
+    
+    # the numrounds which gives the max Score (rmse)
+    #print(opt_obj$scoreSummary)
+    numrounds <- opt_obj$scoreSummary$nrounds[
+      which(opt_obj$scoreSummary$Score
+            == max(opt_obj$scoreSummary$Score))]
+    print(numrounds)
+    
     for (f in 1:n_forecast){
       # Boosted Trees
-      train_x <- y_Z[1:(315+f-h),2:ncol(y_Z)]
-      train_y <- y_Z[1:(315+f-h),1]
-      test_x <- y_Z[315+f,2:ncol(y_Z)]
-      test_y <- y_Z[315+f,1]
-      
-      #Optimization
-      set.seed(2021)
-      
-      no_cores <- detectCores() / 2 # use half of CPU cores to avoid crash  
-      cl <- makeCluster(no_cores) # make a cluster
-      registerDoParallel(cl) # register a parallel backend
-      clusterExport(cl, c('train_x','train_y')) # import objects outside
-      clusterEvalQ(cl,expr= { # launch library to be used in FUN
-        library(xgboost)
-      })
-      
-      scoring_function <- function(eta) {
-        dtrain <- xgb.DMatrix(as.matrix(train_x), label = as.matrix(train_y), missing = NA)
-        
-        pars <- list(eta = 0.3) #default, to be tuned
-        
-        xgbcv <- xgb.cv(
-          params = pars,
-          data = dtrain,
-          nfold = 5, #Coulombe
-          nrounds = 500, #Coulombe, max boosting rounds
-          prediction = TRUE,
-          showsd = TRUE,
-          early_stopping_rounds = 10,
-          maximize = FALSE, #TRUE --> FALSE : RMSE is error, so we minimize right?
-          stratified = FALSE) # Do we set this to TRUE or FALSE?
-        
-        return(list(
-            Score = min(xgbcv$evaluation_log$test_rmse_mean), #max --> min; we MINIMIZE RMSE right?
-            nrounds = xgbcv$best_iteration #iteration number with the best evaluation metric value
-          )
-        )
-      }
-      bounds <- list(eta = c(0, 1))
-      
-      opt_obj <- bayesOpt(FUN = scoring_function, bounds = bounds,
-          initPoints = 3, #Must be more than number of input in scoring function
-          iters.n = 2, #Number of Epochs, runs 2 times to find global optimum
-          parallel = TRUE)
-        
-      stopCluster(cl) # stop the cluster
-      registerDoSEQ() # back to serial computing
-      
-      # take the optimal parameters for xgboost()
-      print(getBestPars(opt_obj)[1])
-      params <- list(eta = getBestPars(opt_obj)[1])
-      
-      # the numrounds which gives the max Score (rmse)
-      #print(opt_obj$scoreSummary)
-      numrounds <- opt_obj$scoreSummary$nrounds[
-        which(opt_obj$scoreSummary$Score
-              == max(opt_obj$scoreSummary$Score))]
-      print(numrounds)
+      train_x <- y_Z[11:(250+f),2:ncol(y_Z)]
+      train_y <- y_Z[11:(250+f),1]
+      test_x <- y_Z[250+f,2:ncol(y_Z)]
+      test_y <- y_Z[250+f,1]
       
       X_BT_tuned <- xgboost(params = params,
                            data = as.matrix(train_x),
