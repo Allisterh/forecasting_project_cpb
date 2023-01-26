@@ -164,9 +164,9 @@ RF_MARX_forecast <- Forecasting_function(Unempl, MARX, n_forecast, horizons, ntr
 RF_X_F_forecast <- Forecasting_function(Unempl, X_F, n_forecast, horizons, ntrees) #60 minutes
 RF_X_MAF_forecast <- Forecasting_function(Unempl, X_MAF, n_forecast, horizons, ntrees) #90 minutes
 RF_X_MARX_forecast <- Forecasting_function(Unempl, X_MARX, n_forecast, horizons, ntrees) #2 hours
-RF_F_MAF_forecast <- Forecasting_function(Unempl, F_MAF, n_forecast, horizons, ntrees)
-RF_F_MARX_forecast <- Forecasting_function(Unempl, F_MARX, n_forecast, horizons, ntrees)
-RF_MAF_MARX_forecast <- Forecasting_function(Unempl, MAF_MARX, n_forecast, horizons, ntrees)
+RF_F_MAF_forecast <- Forecasting_function(Unempl, F_MAF, n_forecast, horizons, ntrees) #15 minutes
+RF_F_MARX_forecast <- Forecasting_function(Unempl, F_MARX, n_forecast, horizons, ntrees) #50 minutes
+RF_MAF_MARX_forecast <- Forecasting_function(Unempl, MAF_MARX, n_forecast, horizons, ntrees) #60 minutes
 RF_X_F_MAF_forecast <- Forecasting_function(Unempl, X_F_MAF, n_forecast, horizons, ntrees)
 RF_X_F_MARX_forecast <- Forecasting_function(Unempl, X_F_MARX, n_forecast, horizons, ntrees)
 RF_X_MAF_MARX_forecast <- Forecasting_function(Unempl, X_MAF_MARX, n_forecast, horizons, ntrees)
@@ -217,9 +217,9 @@ write.csv(RF_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/
 write.csv(RF_X_F_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/Coulombe_RF_X_F_forecast.csv", row.names=FALSE)
 write.csv(RF_X_MAF_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/Coulombe_RF_X_MAF_forecast.csv", row.names=FALSE)
 write.csv(RF_X_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/Coulombe_RF_X_MARX_forecast.csv", row.names=FALSE)
-write.csv(RF_F_MAF_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/RF_F_MAF_forecast.csv", row.names=FALSE)
-write.csv(RF_F_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/RF_F_MARX_forecast.csv", row.names=FALSE)
-write.csv(RF_MAF_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/RF_MAF_MARX_forecast.csv", row.names=FALSE)
+write.csv(RF_F_MAF_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/Coulombe_RF_F_MAF_forecast.csv", row.names=FALSE)
+write.csv(RF_F_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/Coulombe_RF_F_MARX_forecast.csv", row.names=FALSE)
+write.csv(RF_MAF_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/Coulombe_RF_MAF_MARX_forecast.csv", row.names=FALSE)
 write.csv(RF_X_F_MAF_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/RF_X_F_MAF_forecast.csv", row.names=FALSE)
 write.csv(RF_X_F_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/RF_X_F_MARX_forecast.csv", row.names=FALSE)
 write.csv(RF_X_MAF_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/RF_X_MAF_MARX_forecast.csv", row.names=FALSE)
