@@ -3,7 +3,9 @@ rm(list=ls())
 
 ## -- Importing Data --
 #Nikki:
-df <- read.csv("~/Documents/MSc Econometrics/Blok 3/Seminar/R code/data-eur2023.csv", row.names=1)
+#df <- read.csv("~/Documents/MSc Econometrics/Blok 3/Seminar/R code/data-eur2023.csv", row.names=1)
+#Sophia: 
+df <- read.csv("C:/Users/sophi_j0d2ugq/OneDrive/Documents/GitHub/project_cpb/data-eur2023.csv", row.names=1)
 
 ### ---- FEATURE ENGINEERING ----
 library(vars)
@@ -102,42 +104,44 @@ n_combinations <- 15
 # -- Forecasting Function -- 
 library(ParBayesianOptimization)
 library(doParallel)
+library(data.table)
 library(xgboost)
 
-#Unempl <- df[c(2)]  #Dutch
-Unempl <- unemployment #Coulombe
-#y_real <- df[316:434,2]
-y_real <- unemployment[251:705,] #Coulombe
-horizons <- list(3) #6, 12, 18, 24)
+Unempl <- df[c(2)] 
+y_real <- df[316:434,2]
+horizons <- list(3, 6, 12, 18, 24)
 #horizons <- list(3)
-#n_forecast <- 434-315 # Check timepoints for training and test set!
-n_forecast <- 706-251 #Coulombe
+n_forecast <- 434-315 # Check timepoints for training and test set!
 dutch_forecasts <- c(435,315)
 coulombe_forecasts <- c(706,251)
 
 Forecasting_function <- function(y, Z, n_forecast, horizons){
-  y_Z <- cbind(y, Z)
+  
   BT_y_forecast <- data.frame(matrix(ncol = length(horizons), nrow = n_forecast))
   
   i <- 0
   for (h in horizons){
+    
+    # Shifted y for h-step forecast
     shift_y = as.data.frame(shift(y,n=h, type = 'lead', give.names=TRUE))
     colnames(shift_y) = 'y'
     y_Z <- cbind(shift_y, Z)
     
     i <- i+1
-    
-    train_x <- y_Z[11:(250+1),2:ncol(y_Z)]
-    train_y <- y_Z[11:(250+1),1]
+    f <- 1 
+    train_xyz <- y_Z[1:(315+f-1),2:ncol(y_Z)] #251
+    train_y <- y_Z[1:(315+f-1),1]
+    test_x <- y_Z[315+f,2:ncol(y_Z)]
+    test_y <- y_Z[315+f,1]
     
     #Optimization
     set.seed(2021)
+     
     
     scoring_function <- function(eta) {
-      library(xgboost)
-      dtrain <- xgb.DMatrix(as.matrix(train_x), label = as.matrix(train_y), missing = NA)
+      dtrain <- xgb.DMatrix(as.matrix(train_xyz), label = as.matrix(train_y), missing = NA)
       
-      pars <- list(eta = 0.3) #default, to be tuned
+      pars <- list(eta = 0.1) #default, to be tuned
       
       xgbcv <- xgb.cv(
         params = pars,
@@ -159,9 +163,9 @@ Forecasting_function <- function(y, Z, n_forecast, horizons){
     bounds <- list(eta = c(0, 1))
     
     opt_obj <- bayesOpt(FUN = scoring_function, bounds = bounds,
-                        initPoints = 3, #Must be more than number of input in scoring function
+                        initPoints = 10, #Must be more than number of input in scoring function
                         iters.n = 2, #Number of Epochs, runs 2 times to find global optimum
-                        parallel = TRUE)
+                        parallel = FALSE)
     
     # take the optimal parameters for xgboost()
     print(getBestPars(opt_obj)[1])
@@ -175,25 +179,27 @@ Forecasting_function <- function(y, Z, n_forecast, horizons){
     print(numrounds)
     
     for (f in 1:n_forecast){
+      
       # Boosted Trees
-      train_x <- y_Z[11:(250+f),2:ncol(y_Z)]
-      train_y <- y_Z[11:(250+f),1]
-      test_x <- y_Z[250+f,2:ncol(y_Z)]
-      test_y <- y_Z[250+f,1]
+      train_xyz <- y_Z[1:(315+f-h),2:ncol(y_Z)] #251
+      train_y <- y_Z[1:(315+f-h),1]
+      test_x <- y_Z[315+f,2:ncol(y_Z)]
+      test_y <- y_Z[315+f,1]
       
       X_BT_tuned <- xgboost(params = params,
-                           data = as.matrix(train_x),
+                           data = as.matrix(train_xyz),
                            label = as.matrix(train_y),
                            nrounds = numrounds,
                            max.depth = 5,
                            eval_metric = "rmse",
                            verbose = 0)
 
-      xgb_test <- xgb.DMatrix(data = as.matrix(test_x), label = as.matrix(test_y))
+      xgb_test <- xgb.DMatrix(data = as.matrix(test_x), label = as.matrix(test_y)) 
       
       BT_y_forecast[f,i] = predict(X_BT_tuned, xgb_test)
 
     }
+    
     colnames(BT_y_forecast)[i]=paste('h=',h,sep='')
   }
   return(BT_y_forecast)

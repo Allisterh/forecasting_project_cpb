@@ -5,53 +5,59 @@ rm(list=ls())
 #Nikki:
 df <- read.csv("~/Documents/MSc Econometrics/Blok 3/Seminar/R code/data-eur2023.csv", row.names=1)
 
+# Dees:
+#df <- fredmd("D:/EUR/Master/Seminar Case studies in Applied Econometrics/R code/data122022.csv")
+row.names(df) <- df[,1]
+unemployment <- as.data.frame(df$UNRATE)
+unemployment <- as.data.frame(unemployment[3:765,])
+row.names(unemployment) <- row.names(df)[3:765]
+
+df_wo_unrate <- df[-c(1,25) ]
+df_wo_unrate <- df_wo_unrate[3:765,] # Delete first two rows because we transform and some do second differencign
+# Delete columns with NA values/that do not have data from 1960 onwards
+new_df <- df_wo_unrate[ , colSums(is.na(df_wo_unrate))==0]
+scaled_df <- as.data.frame(scale(new_df))
+
 ### ---- FEATURE ENGINEERING ----
 library(vars)
 X_t <- df[-c(1,2)] #Remove pubdate and dependent variable
 n_var <- ncol(X_t)
 T <- nrow(X_t)
-X_lags <- 4
+X_lags <- 12 #Coulombe
 n_Factors <- 3 
-F_lags <- 4 #Paper Coulombe (check)
+F_lags <- 12 #Paper Coulombe (check)
 P_MAF <- 12 #Paper Coulombe
 n_MAF <- 3 #Paper Coulombe
 P_MARX <- 12 #Paper Coulombe
 
 ## - X - 
-X_function <- function(X_t, X_lags, n_var){
-  X <- data.frame(matrix(ncol = (X_lags+1)*n_var, nrow = T))
-  X[,1:n_var] <- X_t
-  for (l in 1:X_lags){
-    X[,(l*n_var+1):((l+1)*n_var)] <- rbind(X_t[1:l,]*NA, head(X_t, - l))
-  }
-  colnames(X)=paste('X_',colnames(X),sep='')
-  return(X)
-}
+library(data.table)
+X_function <- function(regressor_matrix, X_lags){
+  return(as.data.frame(shift(regressor_matrix,n=0:X_lags, type = 'lag', give.names=TRUE)))
+} 
 
 ## - F - 
-F_function <- function(X, n_Factors, F_lags, T){
-  factors_t <- function(X, n_Factors) {
-    X_pca <- prcomp(X, center = TRUE,scale. = TRUE)
-    factors_t <- X_pca$x[1:n_Factors]
-    return(factors_t)
-  }
-  F <- data.frame(matrix(ncol = (n_Factors*(F_lags+1)), nrow = T))
+factors_t <- function(regressor_matrix, n_Factors, boolo) {
+  X_pca <- prcomp(regressor_matrix, center = boolo,scale. = boolo)
+  factors_t <- X_pca$x[1:n_Factors]
+  return(factors_t)
+}
+
+F_function <- function(regressor_matrix, n_Factors, F_lags, T, boolo){
+  F <- data.frame(matrix(ncol = n_Factors, nrow = T))
   for (t in n_Factors:T){
-    F[t,1:n_Factors] <- factors_t(X_t[1:t,], n_Factors)
+    F[t,1:n_Factors] <- factors_t(regressor_matrix[1:t,], n_Factors, boolo)
   }
-  for (i in 1:F_lags){
-    F[(n_Factors+i):T,(i*n_Factors+1):((i+1)*n_Factors)] <- head(F[n_Factors:T,1:n_Factors], - i)
-  }
-  colnames(F)=paste('F_',colnames(F),sep='')
+  F <- as.data.frame(shift(F, n=0:F_lags, type = 'lag', give.names=TRUE)) #shift function for lags of factors
   return(F)
 }
 
 ## - MAF - 
-MAF_function <- function(X, T, n_var, P_MAF, n_MAF) {
+MAF_function <- function(X, X_lags, T, n_var, P_MAF, n_MAF, boolo) { #Use X (Feature matrix with lags) as input!
   MAF <- data.frame(matrix(ncol = (n_MAF*n_var), nrow = T))
   for (v in 1:n_var){
-    for (t in (P_MAF+1):T){
-      X_pca <- prcomp(X_t[(t-P_MAF):t,v], center = TRUE,scale. = TRUE)
+    for (t in (2*P_MAF+1):T){
+      X_pca <- prcomp(X[(t-P_MAF):t,(((v-1)*X_lags)+1):(v*X_lags)], center = boolo, scale. = boolo)
       MAF[t,(1+(v-1)*n_MAF):(v*n_MAF)] <- X_pca$x[1:n_MAF]
     }
   }
@@ -79,10 +85,15 @@ MARX_function <- function(X, P_MARX, n_var) {
 }
 
 ## -- Combinations of Z --
-X <- X_function(X_t, X_lags, n_var)
-F <- F_function(X_t, n_Factors, F_lags, T)
-MAF <- MAF_function(X_t, T, n_var, P_MAF, n_MAF)
-MARX <- MARX_function(X_t, P_MARX, n_var)
+X <- X_function(regressor_matrix, X_lags)
+
+scaled_regressor_matrix <- scale(regressor_matrix) #Scale Regressor Matrix for PCA in F
+F <- F_function(scaled_regressor_matrix, n_Factors, F_lags, T, FALSE)
+
+scaled_X <- scale(X) # Scale Feature X for PCA in MAF
+MAF <- MAF_function(scaled_X, X_lags, T, n_var, P_MAF, n_MAF, FALSE)
+
+MARX <- MARX_function(regressor_matrix, P_MARX, n_var)
 
 X_F <- cbind(X, F)
 X_MAF <- cbind(X, MAF)
@@ -101,17 +112,14 @@ n_combinations <- 15
 ### ---- FORECASTING ----
 # -- Forecasting Function -- 
 library(ParBayesianOptimization)
-library(doParallel)
 library(xgboost)
 
-#Unempl <- df[c(2)]  #Dutch
-Unempl <- unemployment #Coulombe
-#y_real <- df[316:434,2]
-y_real <- unemployment[251:705,] #Coulombe
-horizons <- list(3) #6, 12, 18, 24)
-#horizons <- list(3)
-#n_forecast <- 434-315 # Check timepoints for training and test set!
-n_forecast <- 706-251 #Coulombe
+Unempl <- unemployment
+rownames(Unempl) <- as.data.frame(rownames(unemployment))
+horizons <- list(3) # 6, 12, 18, 24
+n_forecast <- 706-251 # Coulombe time window frame 1980M1 - 2017M12
+y_real <- unemployment[251:705,]
+
 dutch_forecasts <- c(435,315)
 coulombe_forecasts <- c(706,251)
 
@@ -176,6 +184,7 @@ Forecasting_function <- function(y, Z, n_forecast, horizons){
     
     for (f in 1:n_forecast){
       # Boosted Trees
+      print(f)
       train_x <- y_Z[11:(250+f),2:ncol(y_Z)]
       train_y <- y_Z[11:(250+f),1]
       test_x <- y_Z[250+f,2:ncol(y_Z)]
@@ -200,50 +209,21 @@ Forecasting_function <- function(y, Z, n_forecast, horizons){
 }
 
 ## -- Forecasting Z -- 
-Z <- X
-BT_X_forecast <- Forecasting_function(Unempl, Z, n_forecast, horizons)
-
-Z <- F
-BT_F_forecast <- Forecasting_function(Unempl, Z, n_forecast, horizons)
-
-Z <- MAF
-BT_MAF_forecast <- Forecasting_function(Unempl, Z, n_forecast, horizons)
-
-Z <- MARX
-BT_MARX_forecast <- Forecasting_function(Unempl, Z, n_forecast, horizons)
-
-Z <- X_F
-BT_X_F_forecast <- Forecasting_function(Unempl, Z, n_forecast, horizons)
-
-Z <- X_MAF
-BT_X_MAF_forecast <- Forecasting_function(Unempl, Z, n_forecast, horizons)
-
-Z <- X_MARX
-BT_X_MARX_forecast <- Forecasting_function(Unempl, Z, n_forecast, horizons)
-
-Z <- F_MAF
-BT_F_MAF_forecast <- Forecasting_function(Unempl, Z, n_forecast, horizons)
-
-Z <- F_MARX
-BT_F_MARX_forecast <- Forecasting_function(Unempl, Z, n_forecast, horizons)
-
-Z <- MAF_MARX
-BT_MAF_MARX_forecast <- Forecasting_function(Unempl, Z, n_forecast, horizons)
-
-Z <- X_F_MAF
-BT_X_F_MAF_forecast <- Forecasting_function(Unempl, Z, n_forecast, horizons)
-
-Z <- X_F_MARX
-BT_X_F_MARX_forecast <- Forecasting_function(Unempl, Z, n_forecast, horizons)
-
-Z <- X_MAF_MARX
-BT_X_MAF_MARX_forecast <- Forecasting_function(Unempl, Z, n_forecast, horizons)
-
-Z <- F_MAF_MARX
-BT_F_MAF_MARX_forecast <- Forecasting_function(Unempl, Z, n_forecast, horizons)
-
-Z <- X_F_MAF_MARX
-BT_X_F_MAF_MARX_forecast <- Forecasting_function(Unempl, Z, n_forecast, horizons)
+BT_X_forecast <- Forecasting_function(Unempl, X, n_forecast, horizons)
+BT_F_forecast <- Forecasting_function(Unempl, F, n_forecast, horizons)
+BT_MAF_forecast <- Forecasting_function(Unempl, MAF, n_forecast, horizons)
+BT_MARX_forecast <- Forecasting_function(Unempl, MARX, n_forecast, horizons)
+BT_X_F_forecast <- Forecasting_function(Unempl, X_F, n_forecast, horizons)
+BT_X_MAF_forecast <- Forecasting_function(Unempl, X_MAF, n_forecast, horizons)
+BT_X_MARX_forecast <- Forecasting_function(Unempl, X_MARX, n_forecast, horizons)
+BT_F_MAF_forecast <- Forecasting_function(Unempl, F_MAF, n_forecast, horizons)
+BT_F_MARX_forecast <- Forecasting_function(Unempl, F_MARX, n_forecast, horizons)
+BT_MAF_MARX_forecast <- Forecasting_function(Unempl, MAF_MARX, n_forecast, horizons)
+BT_X_F_MAF_forecast <- Forecasting_function(Unempl, X_F_MAF, n_forecast, horizons)
+BT_X_F_MARX_forecast <- Forecasting_function(Unempl, X_F_MARX, n_forecast, horizons)
+BT_X_MAF_MARX_forecast <- Forecasting_function(Unempl, X_MAF_MARX, n_forecast, horizons)
+BT_F_MAF_MARX_forecast <- Forecasting_function(Unempl, F_MAF_MARX, n_forecast, horizons)
+BT_X_F_MAF_MARX_forecast <- Forecasting_function(Unempl, X_F_MAF_MARX, n_forecast, horizons)
 
 ## -- RMSE Function --
 RMSE_BT <- data.frame(matrix(ncol = length(horizons), nrow = n_combinations))
@@ -279,21 +259,21 @@ rownames(RMSE_BT) <- c("X", "F", "MAF", "MARX", "X,F", "X,MAF", "X,MARX", "F,MAF
 colnames(RMSE_BT) <- c("h=3", "h=6", "h=12", "h=18", "h=24")
 
 # Saving Prediction Tables
-write.csv(BT_X_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/BT_X_forecast.csv", row.names=FALSE)
-write.csv(BT_F_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/BT_F_forecast.csv", row.names=FALSE)
-write.csv(BT_MAF_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/BT_MAF_forecast.csv", row.names=FALSE)
-write.csv(BT_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/BT_MARX_forecast.csv", row.names=FALSE)
-write.csv(BT_X_F_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/BT_X_F_forecast.csv", row.names=FALSE)
-write.csv(BT_X_MAF_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/BT_X_MAF_forecast.csv", row.names=FALSE)
-write.csv(BT_X_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/BT_X_MARX_forecast.csv", row.names=FALSE)
-write.csv(BT_F_MAF_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/BT_F_MAF_forecast.csv", row.names=FALSE)
-write.csv(BT_F_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/BT_F_MARX_forecast.csv", row.names=FALSE)
-write.csv(BT_MAF_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/BT_MAF_MARX_forecast.csv", row.names=FALSE)
-write.csv(BT_X_F_MAF_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/BT_X_F_MAF_forecast.csv", row.names=FALSE)
-write.csv(BT_X_F_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/BT_X_F_MARX_forecast.csv", row.names=FALSE)
-write.csv(BT_X_MAF_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/BT_X_MAF_MARX_forecast.csv", row.names=FALSE)
-write.csv(BT_F_MAF_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/BT_F_MAF_MARX_forecast.csv", row.names=FALSE)
-write.csv(BT_X_F_MAF_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/BT_X_F_MAF_MARX_forecast.csv", row.names=FALSE)
+write.csv(BT_X_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/Coulombe_BT_X_forecast.csv", row.names=FALSE)
+write.csv(BT_F_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/Coulombe_BT_F_forecast.csv", row.names=FALSE)
+write.csv(BT_MAF_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/Coulombe_BT_MAF_forecast.csv", row.names=FALSE)
+write.csv(BT_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/Coulombe_BT_MARX_forecast.csv", row.names=FALSE)
+write.csv(BT_X_F_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/Coulombe_BT_X_F_forecast.csv", row.names=FALSE)
+write.csv(BT_X_MAF_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/Coulombe_BT_X_MAF_forecast.csv", row.names=FALSE)
+write.csv(BT_X_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/Coulombe_BT_X_MARX_forecast.csv", row.names=FALSE)
+write.csv(BT_F_MAF_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/Coulombe_BT_F_MAF_forecast.csv", row.names=FALSE)
+write.csv(BT_F_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/Coulombe_BT_F_MARX_forecast.csv", row.names=FALSE)
+write.csv(BT_MAF_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/Coulombe_BT_MAF_MARX_forecast.csv", row.names=FALSE)
+write.csv(BT_X_F_MAF_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/Coulombe_BT_X_F_MAF_forecast.csv", row.names=FALSE)
+write.csv(BT_X_F_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/Coulombe_BT_X_F_MARX_forecast.csv", row.names=FALSE)
+write.csv(BT_X_MAF_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/Coulombe_BT_X_MAF_MARX_forecast.csv", row.names=FALSE)
+write.csv(BT_F_MAF_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/Coulombe_BT_F_MAF_MARX_forecast.csv", row.names=FALSE)
+write.csv(BT_X_F_MAF_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/Coulombe_BT_X_F_MAF_MARX_forecast.csv", row.names=FALSE)
 
 write.csv(RMSE_BT, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/RMSE_BT.csv", row.names=TRUE)
 
