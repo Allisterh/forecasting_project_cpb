@@ -65,21 +65,59 @@ computing_rmse <- function(data_frame,the_n_TL,the_h,the_predictors,the_n_F,the_
   #Computing Residuals and RMSE
   resids <- na.omit(prediction[(nrow(data_frame)-the_poos+1):nrow(data_frame)] - data_frame[(nrow(data_frame)-the_poos+1):nrow(data_frame),"UNRATE"])
   rmse <- sqrt(mean(resids^2))
-  return(rmse)
+  return(c(prediction,rmse))
 }
 
 #Optimize RMSE Over Combinations n_Factors, n_Lags, n_Lags_Predictor
-results_1m <- matrix(, nrow = 5, ncol = 5)
-#results_3m <- matrix(, nrow = 5, ncol = 5)
-#results_6m <- matrix(, nrow = 5, ncol = 5)
+results_1m <- matrix(, nrow = 12, ncol = 12)
+results_3m <- matrix(, nrow = 12, ncol = 12)
+results_6m <- matrix(, nrow = 12, ncol = 12)
+results_9m <- matrix(, nrow = 12, ncol = 12)
+results_12m <- matrix(, nrow = 12, ncol = 12)
+results_24m <- matrix(, nrow = 12, ncol = 12)
 
-for (i in 1:5) {     #number of factors
-  for (j in 1:5) {   #number of lags
-    start <- Sys.time()
-    results_1m[i,j] <- computing_rmse(df,the_n_TL = j, the_h = 1, the_predictors = predictors, the_n_F = i, the_n_L = j, the_poos = 120)
-    end <- Sys.time()
-    #results_3m[i,j] <- computing_rmse(df,the_n_TL = j, the_h = 3, the_predictors = predictors, the_n_F = i, the_n_L = j, the_poos = 120)
-    #results_6m[i,j] <- computing_rmse(df,the_n_TL = j, the_h = 6, the_predictors = predictors, the_n_F = i, the_n_L = j, the_poos = 120)
-    print(c(i,j,end-start))
+for (i in 1:12) {     #number of factors
+  for (j in 1:12) {   #number of lags
+    start_1 <- Sys.time()
+    results_1m[i,j] <- computing_rmse(df,the_n_TL = j, the_h = 1, the_predictors = predictors, the_n_F = i, the_n_L = j, the_poos = 456)
+    end_1 <- Sys.time()
+    print(c(i,j,1,end_1-start_1))
+    
+    start_3 <- Sys.time()
+    results_3m[i,j] <- computing_rmse(df,the_n_TL = j, the_h = 3, the_predictors = predictors, the_n_F = i, the_n_L = j, the_poos = 456)
+    end_3 <- Sys.time()
+    print(c(i,j,3,end_3-start_3))
+    
+    start_6 <- Sys.time()
+    results_6m[i,j] <- computing_rmse(df,the_n_TL = j, the_h = 6, the_predictors = predictors, the_n_F = i, the_n_L = j, the_poos = 456)
+    end_6 <- Sys.time()
+    print(c(i,j,6,end_6-start_6))
+    
+    start_9 <- Sys.time()
+    results_9m[i,j] <- computing_rmse(df,the_n_TL = j, the_h = 9, the_predictors = predictors, the_n_F = i, the_n_L = j, the_poos = 456)
+    end_9 <- Sys.time()
+    print(c(i,j,9,end_12-start_9))
+    
+    start_12 <- Sys.time()
+    results_12m[i,j] <- computing_rmse(df,the_n_TL = j, the_h = 12, the_predictors = predictors, the_n_F = i, the_n_L = j, the_poos = 456)
+    end_12 <- Sys.time()
+    print(c(i,j,12,end_12-start_12))
+    
+    start_24 <- Sys.time()
+    results_24m[i,j] <- computing_rmse(df,the_n_TL = j, the_h = 24, the_predictors = predictors, the_n_F = i, the_n_L = j, the_poos = 46)
+    end_24 <- Sys.time()
+    print(c(i,j,24,end_24-start_24))
   }
 }
+
+#Creating Forecasts: 3 Factors, 3 Lags of Factors, 4 Lags of Target
+#dates = rbind(seq(from = as.Date("1960-01-01"), to = as.Date("2017-12-01"), by = 'month'),"RMSE")
+h_1 <- computing_rmse(df,4,the_h=1,predictors,3,3,456)
+h_3 <- computing_rmse(df,4,the_h=3,predictors,3,3,456)
+h_6 <- computing_rmse(df,4,the_h=6,predictors,3,3,456)
+h_9 <- computing_rmse(df,4,the_h=9,predictors,3,3,456)
+h_12 <- computing_rmse(df,4,the_h=12,predictors,3,3,456)
+h_24 <- computing_rmse(df,4,the_h=24,predictors,3,3,456)
+
+forecasts <- as.data.frame(cbind(h_1,h_3,h_6,h_9,h_12,h_24))
+write.csv(forecasts, "~/Desktop/forecasts_v2.csv", row.names=FALSE)
