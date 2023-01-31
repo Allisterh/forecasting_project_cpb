@@ -156,7 +156,7 @@ Forecasting_function <- function(y, Z, n_forecast, horizons){
     opt_obj <- bayesOpt(FUN = scoring_function, bounds = bounds,
                         initPoints = 3, #Must be more than number of input in scoring function
                         iters.n = 2, #Number of Epochs, runs 2 times to find global optimum
-                        parallel = TRUE)
+                        parallel = FALSE)
     
     # take the optimal parameters for xgboost()
     print(getBestPars(opt_obj)[1])

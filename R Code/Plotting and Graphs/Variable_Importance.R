@@ -105,7 +105,9 @@ y_real <- Unempl[316:434]
 dutch_forecasts <- c(434,315) #Begin forecasting from 316
 
 # RANDOM FOREST - direct
-library(relaimpo)
+#library(relaimpo)
+library(varImp)
+library(caret)
 ntrees <- 200 #Accurate but slow
 
 VI_function <- function(y, Z, n_forecast, horizons, ntrees){
@@ -118,18 +120,47 @@ VI_function <- function(y, Z, n_forecast, horizons, ntrees){
     nu <- Sys.time()
 
     y_Z_train <- y_Z[1:434,]
-    print(head(y_Z_train,10))
 
     X.rf <- randomForest(y ~ ., 
                            data = y_Z_train, 
                            ntree = ntrees, 
                            mtry = (ncol(Z)/3),
-                           na.action = na.omit) # Paper Coulombe (Appendix): ntree=200, mtry=#Z/3
-    relImp <- calc.relimp(X.rf, type="lmg",rela=TRUE)
+                           na.action = na.omit)
+    #relImp <- calc.relimp(X.rf, type="lmg",rela=TRUE)
+    
+    importance <- caret::varImp(X.rf, conditional=TRUE) # conditional=True, adjusts for correlations between predictors
       
     print(Sys.time()-nu)
   }
-  return(relImp)
+  return(importance)
 }
 
-varImp <- VI_function(Unempl, X_F_MAF_MARX, n_forecast, horizons, ntrees)
+# IMPORTANCE X_F_MAF_MARX
+variable_imp_XFMAFMARX <- VI_function(Unempl, X_F_MAF_MARX, n_forecast, horizons, ntrees)
+
+X_importance_XFMAFMARX <- variable_imp[1:(n_var*(1+X_lags)),]
+X_importance_XFMAFMARX <- sum(X_importance_XFMAFMARX)
+
+F_importance_XFMAFMARX <- variable_imp[(n_var*(1+X_lags)+1):(n_var*(1+X_lags)+n_Factors*F_lags+2),]
+F_importance_XFMAFMARX <- sum(F_importance_XFMAFMARX)
+
+MAF_importance_XFMAFMARX <- variable_imp[(n_var*(1+X_lags)+n_Factors*F_lags+3):
+                                           (n_var*(1+X_lags)+n_Factors*F_lags+P_MAF*n_var+2),]
+MAF_importance_XFMAFMARX <- sum(MAF_importance_XFMAFMARX)
+
+MARX_importance_XFMAFMARX <- variable_imp[(n_var*(1+X_lags)+n_Factors*F_lags+P_MAF*n_var+3):
+                                            (n_var*(1+X_lags)+n_Factors*F_lags+P_MAF*n_var+P_MARX*n_var+2),]
+MARX_importance_XFMAFMARX <- sum(MARX_importance_XFMAFMARX)
+
+X_importance_XFMAFMARX_norm <- X_importance_XFMAFMARX / (X_importance_XFMAFMARX + F_importance_XFMAFMARX 
+                                                    + MAF_importance_XFMAFMARX + MARX_importance_XFMAFMARX) *100
+
+F_importance_XFMAFMARX_norm <- F_importance_XFMAFMARX / (X_importance_XFMAFMARX + F_importance_XFMAFMARX 
+                                                    + MAF_importance_XFMAFMARX + MARX_importance_XFMAFMARX) *100
+
+MAF_importance_XFMAFMARX_norm <- MAF_importance_XFMAFMARX / (X_importance_XFMAFMARX + F_importance_XFMAFMARX 
+                                                    + MAF_importance_XFMAFMARX + MARX_importance_XFMAFMARX) *100
+
+MARX_importance_XFMAFMARX_norm <- MARX_importance_XFMAFMARX / (X_importance_XFMAFMARX + F_importance_XFMAFMARX 
+                                                    + MAF_importance_XFMAFMARX + MARX_importance_XFMAFMARX) *100
+

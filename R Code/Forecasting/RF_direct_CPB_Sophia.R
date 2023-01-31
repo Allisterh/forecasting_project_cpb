@@ -129,7 +129,7 @@ Forecasting_function <- function(y, Z, n_forecast, horizons, ntrees){
     i <- i+1
     nu <- Sys.time()
     for (f in 1:n_forecast){
-      y_Z_train <- y_Z[F_lags-1:314+f-1,] # Number of lags here is 12
+      y_Z_train <- y_Z[F_lags-1:314+f-1,] # Number of lags here is 12, check index?
       y_Z_test <- y_Z[314+f,]
       
       # Random Forest
