@@ -1,6 +1,9 @@
 # Dees forecasting replication Coulombe
 library(BVAR)
 library(randomForest)
+library(vars)
+library(fbi)
+library(gsubfn)
 
 #Nikki:
 #df <- read.csv("~/Documents/MSc Econometrics/Blok 3/Seminar/R code/data-eur2023.csv", row.names=1)
@@ -19,104 +22,16 @@ new_df <- df_wo_unrate[ , colSums(is.na(df_wo_unrate))==0]
 scaled_df <- as.data.frame(scale(new_df))
 
 ### ---- FEATURE ENGINEERING ----
-library(vars)
+
+source("Function Feature Matrix.R")
+
+list[X_F,X_MAF,X_MARX,F_MAF,F_MARX,MAF_MARX,X_F_MAF,X_F_MARX,X_MAF_MARX,F_MAF_MARX,X_F_MAF_MARX] <- Create_all_feature_matrices(new_df)
+
+check <- X_function(new_df)
+do <- MAF_function(check)
+
 n_var <- ncol(new_df)
 T <- nrow(new_df)
-X_t <- new_df
-X_lags <- 12
-n_Factors <- 3 
-F_lags <- 4 #Paper Coulombe (check FREDMD: Coulombe gebruikt er 12, CPB wil er 4)
-P_MAF <- 12 #Paper Coulombe
-n_MAF <- 3 #Paper Coulombe
-P_MARX <- 12 #Paper Coulombe
-
-## - X - 
-X_function <- function(X_t, X_lags, n_var){
-  X <- data.frame(matrix(ncol = (X_lags+1)*n_var, nrow = T))
-  X[,1:n_var] <- X_t
-  for (l in 1:X_lags){
-    X[,(l*n_var+1):((l+1)*n_var)] <- rbind(X_t[1:l,]*NA, head(X_t, - l))
-  }
-  colnames(X)=paste('X_',colnames(X),sep='')
-  return(X)
-}
-
-X = as.data.frame(shift(new_df,n=0:12, type = 'lag', give.names=TRUE))
-
-## - F - 
-F_function <- function(X, n_Factors, F_lags, T, boolo){
-  factors_t <- function(X, n_Factors) {
-    X_pca <- prcomp(X, center = boolo,scale. = boolo)
-    factors_t <- X_pca$x[1:n_Factors]
-    return(factors_t)
-  }
-  F <- data.frame(matrix(ncol = (n_Factors*(F_lags+1)), nrow = T))
-  for (t in n_Factors:T){
-    F[t,1:n_Factors] <- factors_t(X_t[1:t,], n_Factors)
-  }
-  for (i in 1:F_lags){
-    F[(n_Factors+i):T,(i*n_Factors+1):((i+1)*n_Factors)] <- head(F[n_Factors:T,1:n_Factors], - i)
-  }
-  colnames(F)=paste('F_',colnames(F),sep='')
-  return(F)
-}
-
-## - MAF - 
-MAF_function <- function(X, T, n_var, P_MAF, n_MAF,boolo) {
-  MAF <- data.frame(matrix(ncol = (n_MAF*n_var), nrow = T))
-  for (v in 1:n_var){
-    for (t in (P_MAF+1):T){
-      X_pca <- prcomp(X_t[(t-P_MAF):t,v], center = boolo,scale. = boolo)
-      MAF[t,(1+(v-1)*n_MAF):(v*n_MAF)] <- X_pca$x[1:n_MAF]
-    }
-  }
-  colnames(MAF)=paste('MAF_',colnames(MAF),sep='')
-  return(MAF)
-}
-
-## - MARX - 
-MARX_function <- function(X, P_MARX, n_var) {
-  var = VAR(X, p = P_MARX, type = "const")
-  matata = as.matrix(var$datamat)
-  mat_y = matata[,1:n_var] # Datamatrix Y_t
-  mat_x = matata[,-c(1:n_var)] # Datamatrices Y_(t-1) ... Y_(t-P_MARX)
-  mat_x_marx = mat_x
-  for(l in 2:P_MARX){
-    for(v in 1:n_var){
-      whotoavg=seq(from=v,to=n_var*(l-1)+v,by=n_var) # List of indeces, selecting values in datamatrix mat_x --> to average
-      mat_x_marx[,n_var*(l-1)+v]=apply(mat_x[,whotoavg],1,mean)
-    }}
-  colnames(mat_x_marx)=paste('MARX_',colnames(mat_x),sep='')
-  mat_x_marx <- mat_x_marx[,1:(ncol(mat_x_marx)-1)] #Remove last column with MARX constant
-  mat_x_marx <- data.frame(mat_x_marx)
-  mat_x_marx <- rbind(mat_x_marx[1:P_MARX,]*NA, mat_x_marx) #Add NaN rows on top 
-  return(mat_x_marx)
-}
-
-## -- Combinations of Z --
-X <- X_function(X_t, X_lags, n_var)
-scaled_x <- scale(X_t)
-F <- F_function(scaled_df, n_Factors, F_lags, T,FALSE)
-MAF <- MAF_function(scaled_df, T, n_var, P_MAF, n_MAF, FALSE)
-MARX <- MARX_function(X_t, P_MARX, n_var)
-
-for (i in 1:ncol(X_t)) {
-  print(paste(colnames(X_t)[i],var(X_t[,i]),sep = ' '))
-}
-
-X_F <- cbind(X, F)
-X_MAF <- cbind(X, MAF)
-X_MARX <- cbind(X, MARX)
-F_MAF <- cbind(F, MAF)
-F_MARX <- cbind(F, MARX)
-MAF_MARX <- cbind(MAF, MARX)
-X_F_MAF <- cbind(X, F, MAF)
-X_F_MARX <- cbind(X, F, MARX)
-X_MAF_MARX <- cbind(X, MAF, MARX)
-F_MAF_MARX <- cbind(F, MAF, MARX)
-X_F_MAF_MARX <- cbind(X, F, MAF, MARX)
-
-n_combinations <- 15
 
 ### ---- FORECASTING ----
 # -- Forecasting Function -- 
