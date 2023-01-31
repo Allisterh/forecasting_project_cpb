@@ -3,8 +3,9 @@ rm(list=ls())
 
 ## -- Importing Data --
 #Nikki:
-df <- read.csv("~/Documents/MSc Econometrics/Blok 3/Seminar/R code/data-eur2023.csv", row.names=1)
-
+#df <- read.csv("~/Documents/MSc Econometrics/Blok 3/Seminar/R code/data-eur2023.csv", row.names=1)
+#Sophia: 
+df <- read.csv("C:/Users/sophi_j0d2ugq/OneDrive/Documents/GitHub/project_cpb/Data en Forecasts/Input/data-eur2023.csv", row.names=1)
 # Dees:
 #df <- fredmd("D:/EUR/Master/Seminar Case studies in Applied Econometrics/R code/data122022.csv")
 row.names(df) <- df[,1]
