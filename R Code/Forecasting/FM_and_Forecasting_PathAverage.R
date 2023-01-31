@@ -10,12 +10,12 @@ library(vars)
 X_t <- df[-c(1,2)] #Remove pubdate and dependent variable
 n_var <- ncol(X_t)
 T <- nrow(X_t)
-X_lags <- 4
+X_lags <- 6
 n_Factors <- 3 
-F_lags <- 4 #Paper Coulombe (check)
-P_MAF <- 12 #Paper Coulombe
+F_lags <- 6 #Average of 4 and 7 
+P_MAF <- 6 #Average of 4 and 7 
 n_MAF <- 3 #Paper Coulombe
-P_MARX <- 12 #Paper Coulombe
+P_MARX <- 6 #Average of 4 and 7 
 
 ## - X - 
 X_function <- function(X_t, X_lags, n_var){
