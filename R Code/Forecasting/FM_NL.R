@@ -1,7 +1,7 @@
-####################################################
-######## Code to Compute FM and FM-RMSE, NL ########
-######## 30.01.23 ##################################
-####################################################
+################################################
+######## Code to Compute FM and FM-RMSE ########
+######## 26.01.23 ##############################
+################################################
 
 #Clearing Environment
 rm(list=ls())
@@ -42,10 +42,10 @@ create_lags <- function(data_frame, n_lags){
 }
 
 h <- 1
-n_TL <- 3
+n_TL <- 12
 target_lags <- create_lags(df[,"unempl"],n_TL)
 shifted_target <- c(df[,"unempl"][-(seq(h))],rep(NA,h)) #Voor OLS beter een list, geen dataframe
-
+  
 #(B)
 create_factors_aux <- function(data_frame, n_factors){
   pca <- prcomp(data_frame, center = FALSE, scale. = FALSE)
@@ -67,8 +67,8 @@ create_factors <- function(data_frame, n_factors, n_lags, T){
 
 #(C)
 scaled_predictors <- as.data.frame(scale(predictors))
-n_F <- 3
-n_L <- 3
+n_F <- 8
+n_L <- 12
 factors_lags_predictors <- create_factors(scaled_predictors,n_factors=n_F,n_lags=n_L,nrow(df))
 
 #(D)
