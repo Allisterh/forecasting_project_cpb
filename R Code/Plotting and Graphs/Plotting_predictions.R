@@ -58,9 +58,6 @@ legend("topright", legend=c("Unemployment", "X+F", "F+MARX", "X+F+MARX"),
        col=c("black", "blue", "red", "green"), lty = 1)
 box(col = "black") 
 
-# Cumulative Squared Error plots
-
-
 ## -- Plotting marginal effects -- 
 Rsquared_function <- function(y_actual, y_pred){
   e_p <- sum((y_actual - y_pred)^2)
@@ -191,3 +188,35 @@ ggp5 <- ggplot(h24, aes(x=Feature, y=Marginal_R2, color=Feature)) + geom_boxplot
 
 grid.arrange(ggp1, ggp2, ggp3, ggp4, ggp5, ncol = 5)
 
+
+### --- PLOTTING CUMULATIVE SQUARED ERROR ---
+n_forecast <- 119
+pubdate <- df$pub_date
+pubdate <- as.Date(pubdate, "%Y-%m-%d")
+
+cumulative_sq_error <- function(actual, prediction, n_forecast){
+  #CSE_forecast <- data.frame(matrix(ncol=length(horizons), nrow=n_forecast))*0
+  CSE_forecast <- data.frame(matrix(ncol=2, nrow=n_forecast))*0  
+  #for (h in 1:length(horizons)){
+  for (h in 1:2){    
+    for (t in 1:n_forecast){
+      if (t==1){
+        CSE_forecast[t,h] <- (actual[t] - prediction[t,h])^2
+      } else {
+      CSE_forecast[t,h] <- CSE_forecast[t-1,h] + (actual[t] - prediction[t,h])^2
+      }
+    }
+  }
+  return(CSE_forecast)
+}
+
+CSE_PA_RF_X_forecast <- cumulative_sq_error(y_real, PA_RF_X_forecast, n_forecast)
+
+# Plot h=3 and h=6
+plot(pubdate[316:434], CSE_PA_RF_X_forecast[,1], type = "l", frame = FALSE, pch = 19, 
+     col = "black", xlab = "Date", ylab = "CSE", cex.lab = 2)
+lines(pubdate[316:434], CSE_PA_RF_X_forecast[,2], pch = 18, col = "blue", type = "l", lty = 1)
+op <- par(cex = 0.6)
+legend("topleft", legend=c("h=3", "h=6"),
+       col=c("black", "blue"), lty = 1)
+box(col = "black") 
