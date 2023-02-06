@@ -101,14 +101,14 @@ n_combinations <- 15
 library(ParBayesianOptimization)
 library(xgboost)
 
-horizons <- list(3, 6) #, 12, 18, 24)
+horizons <- list(3) #6) #, 12, 18, 24)
 Unempl <- df[,2]
 n_forecast <- 434-315 # CPB time window
 y_real <- Unempl[316:434]
 
 dutch_forecasts <- c(434,315) #Begin forecasting from 316
 
-ntrees <- 200 #Accurate but slow
+#ntrees <- 200 #Accurate but slow (RF)
 
 Forecasting_function <- function(y, Z, n_forecast, horizons){
   y_Z <- cbind(y, Z)
@@ -154,7 +154,7 @@ Forecasting_function <- function(y, Z, n_forecast, horizons){
     bounds <- list(eta = c(0, 1))
     
     opt_obj <- bayesOpt(FUN = scoring_function, bounds = bounds,
-                        initPoints = 3, #Must be more than number of input in scoring function
+                        initPoints = 3, #Must be more than number of input in scoring function --> TEST WHETHER HIGHER NR EPOCHS INCREASES ACCURACY
                         iters.n = 2, #Number of Epochs, runs 2 times to find global optimum
                         parallel = FALSE)
     
@@ -162,16 +162,16 @@ Forecasting_function <- function(y, Z, n_forecast, horizons){
     print(getBestPars(opt_obj)[1])
     params <- list(eta = getBestPars(opt_obj)[1])
     
-    # the numrounds which gives the max Score (rmse)
+    # the numrounds which gives the max Score (rmse) --> CHANGE TO MIN??
     #print(opt_obj$scoreSummary)
     numrounds <- opt_obj$scoreSummary$nrounds[
       which(opt_obj$scoreSummary$Score
-            == max(opt_obj$scoreSummary$Score))]
+            == min(opt_obj$scoreSummary$Score))] #--> CHANGE TO MIN????
     print(numrounds)
     
-    for (f in 1:n_forecast){
+    for (f in 116:n_forecast){
       # Boosted Trees
-      print(f)
+      #print(f)
       train_x <- y_Z[(P_MAF+1):(315+f-1),2:ncol(y_Z)]
       train_y <- y_Z[(P_MAF+1):(315+f-1),1]
       test_x <- y_Z[315+f,2:ncol(y_Z)]
@@ -180,11 +180,13 @@ Forecasting_function <- function(y, Z, n_forecast, horizons){
       X_BT_tuned <- xgboost(params = params,
                             data = as.matrix(train_x),
                             label = as.matrix(train_y),
-                            nrounds = numrounds,
-                            max.depth = 5,
-                            eval_metric = "rmse",
-                            verbose = 0)
+                            nrounds = numrounds, #max number of rounds to tune trained model
+                            max.depth = 5, #Coulombe
+                            eval_metric = "rmse", #regression
+                            verbose = 0) #NIET output printen 
       
+      print(test_x)
+      print(test_y)
       xgb_test <- xgb.DMatrix(data = as.matrix(test_x), label = as.matrix(test_y))
       
       BT_y_forecast[f,i] = predict(X_BT_tuned, xgb_test)
@@ -215,6 +217,7 @@ BT_X_F_MAF_MARX_forecast <- Forecasting_function(Unempl, X_F_MAF_MARX, n_forecas
 ## -- RMSE Function --
 RMSE_BT <- data.frame(matrix(ncol = length(horizons), nrow = n_combinations))
 
+# ARE THE Y AND Y-REAL ALIGNED?
 RMSE_function <- function(actual, prediction){
   RMSE <- data.frame(matrix(ncol = length(horizons), nrow = 1))
   i <- 0
