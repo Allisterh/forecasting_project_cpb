@@ -138,14 +138,16 @@ VI_function <- function(y, Z, n_forecast, horizons, ntrees){
 }
 
 ### --- VARIABLE IMPORTANCE: 2 COMBINATIONS ---
+size_title <- 10
+
 two_feature_importance <- function(feature1, feature2, n_forecast, horizons, ntrees){
   Z <- cbind(feature1, feature2)
   allvarimp <- VI_function(Unempl, Z, n_forecast, horizons, ntrees)
   f1_imp <- allvarimp[1:(ncol(feature1)),]
-  f1_imp <- colSums(f1_imp)
+  f1_imp <- colSums(f1_imp) / ncol(feature1)
   
   f2_imp <- allvarimp[(ncol(feature1)+1):(ncol(feature1)+ncol(feature2)),]
-  f2_imp <- colSums(f2_imp)
+  f2_imp <- colSums(f2_imp) / ncol(feature2)
   
   f1_imp_norm <- c(0,0,0,0,0)
   f2_imp_norm <- c(0,0,0,0,0)
@@ -173,13 +175,13 @@ three_feature_importance <- function(feature1, feature2, feature3, n_forecast, h
   allvarimp <- VI_function(Unempl, Z, n_forecast, horizons, ntrees)
   
   f1_imp <- allvarimp[1:(ncol(feature1)),]
-  f1_imp <- colSums(f1_imp)
+  f1_imp <- colSums(f1_imp) / ncol(feature1)
   
   f2_imp <- allvarimp[(ncol(feature1)+1):(ncol(feature1)+ncol(feature2)),]
-  f2_imp <- colSums(f2_imp)
+  f2_imp <- colSums(f2_imp) / ncol(feature2)
   
   f3_imp <- allvarimp[(ncol(feature1)+ncol(feature2)+1):(ncol(feature1)+ncol(feature2)+ncol(feature3)),]
-  f3_imp <- colSums(f3_imp)
+  f3_imp <- colSums(f3_imp) / ncol(feature3)
   
   f1_imp_norm <- c(0,0,0,0,0)
   f2_imp_norm <- c(0,0,0,0,0)
@@ -202,18 +204,18 @@ variable_imp_FMAFMARX <- three_feature_importance(F, MAF, MARX, n_forecast, hori
 variable_imp_XFMAFMARX <- VI_function(Unempl, X_F_MAF_MARX, n_forecast, horizons, ntrees)
 
 X_importance_XFMAFMARX <- variable_imp_XFMAFMARX[1:ncol(X),]
-X_importance_XFMAFMARX <- colSums(X_importance_XFMAFMARX)
+X_importance_XFMAFMARX <- colSums(X_importance_XFMAFMARX) / ncol(X)
 
 F_importance_XFMAFMARX <- variable_imp_XFMAFMARX[(ncol(X)+1):(ncol(X)+ncol(F)),]
-F_importance_XFMAFMARX <- colSums(F_importance_XFMAFMARX)
+F_importance_XFMAFMARX <- colSums(F_importance_XFMAFMARX) / ncol(F)
 
 MAF_importance_XFMAFMARX <- variable_imp_XFMAFMARX[(ncol(X)+ncol(F)+1):
-                                           (ncol(X)+ncol(F)+ncol(MAF)),]
-MAF_importance_XFMAFMARX <- colSums(MAF_importance_XFMAFMARX)
+                                                     (ncol(X)+ncol(F)+ncol(MAF)),]
+MAF_importance_XFMAFMARX <- colSums(MAF_importance_XFMAFMARX) / ncol(MAF)
 
 MARX_importance_XFMAFMARX <- variable_imp_XFMAFMARX[(ncol(X)+ncol(F)+ncol(MAF)+1):
-                                            (ncol(X)+ncol(F)+ncol(MAF)+ncol(MARX)),]
-MARX_importance_XFMAFMARX <- colSums(MARX_importance_XFMAFMARX)
+                                                      (ncol(X)+ncol(F)+ncol(MAF)+ncol(MARX)),]
+MARX_importance_XFMAFMARX <- colSums(MARX_importance_XFMAFMARX) / ncol(MARX)
 
 X_importance_XFMAFMARX_norm <- c(0,0,0,0,0)
 F_importance_XFMAFMARX_norm <- c(0,0,0,0,0)
@@ -222,16 +224,16 @@ MARX_importance_XFMAFMARX_norm <- c(0,0,0,0,0)
 
 for (c in 1:length(horizons)){
   X_importance_XFMAFMARX_norm[c] <- X_importance_XFMAFMARX[c] / (X_importance_XFMAFMARX[c] + F_importance_XFMAFMARX[c] 
-                                                           + MAF_importance_XFMAFMARX[c] + MARX_importance_XFMAFMARX[c]) *100
+                                                                 + MAF_importance_XFMAFMARX[c] + MARX_importance_XFMAFMARX[c]) *100
   
   F_importance_XFMAFMARX_norm[c] <- F_importance_XFMAFMARX[c] / (X_importance_XFMAFMARX[c] + F_importance_XFMAFMARX[c] 
-                                                           + MAF_importance_XFMAFMARX[c] + MARX_importance_XFMAFMARX[c]) *100
+                                                                 + MAF_importance_XFMAFMARX[c] + MARX_importance_XFMAFMARX[c]) *100
   
   MAF_importance_XFMAFMARX_norm[c] <- MAF_importance_XFMAFMARX[c] / (X_importance_XFMAFMARX[c] + F_importance_XFMAFMARX[c] 
-                                                               + MAF_importance_XFMAFMARX[c] + MARX_importance_XFMAFMARX[c]) *100
+                                                                     + MAF_importance_XFMAFMARX[c] + MARX_importance_XFMAFMARX[c]) *100
   
   MARX_importance_XFMAFMARX_norm[c] <- MARX_importance_XFMAFMARX[c] / (X_importance_XFMAFMARX[c] + F_importance_XFMAFMARX[c] 
-                                                                 + MAF_importance_XFMAFMARX[c] + MARX_importance_XFMAFMARX[c]) *100
+                                                                       + MAF_importance_XFMAFMARX[c] + MARX_importance_XFMAFMARX[c]) *100
 }
 
 ## Plotting
@@ -244,12 +246,13 @@ df_XFMAFMARX[11:15, 3] <- MAF_importance_XFMAFMARX_norm
 df_XFMAFMARX[16:20, 3] <- MARX_importance_XFMAFMARX_norm
 
 df_XFMAFMARX_2 <- df_XFMAFMARX[order(df_XFMAFMARX$X1),]
+colnames(df_XFMAFMARX_2) <- c("horizon", "Feature", "VarImpval")
 
-plot_VI_XFMAFMARX <- ggplot(df_XFMAFMARX_2, aes(fill=X2, y=X3, x=X1)) + 
+plot_VI_XFMAFMARX <- ggplot(df_XFMAFMARX_2, aes(fill=Feature, y=VarImpval, x=horizon)) + 
   geom_bar(position="stack", stat="identity")+
-  theme(legend.position = "none",plot.title = element_text(hjust=0.5), axis.title.x=element_blank(), 
+  theme(plot.title = element_text(hjust=0.5, size=size_title), axis.title.x=element_blank(), 
         axis.title.y=element_blank(),  axis.text.x=element_blank()) + 
-  scale_fill_manual(values=c("#845EC2","#00C9A7","#009EFA","#4D8076")) #+ ggtitle("X-F-MAF-MARX")
+  scale_fill_manual(values=c("#845EC2","#00C9A7","#009EFA","#4D8076")) + ggtitle("X-F-MAF-MARX")
 
 ## Plotting XFMAF
 df_XFMAF <- data.frame(matrix(ncol=3, nrow=length(horizons)*3))
@@ -263,9 +266,9 @@ df_XFMAF_2 <- df_XFMAF[order(df_XFMAF$X1),]
 
 plot_VI_XFMAF <- ggplot(df_XFMAF_2, aes(fill=X2, y=X3, x=X1)) + 
   geom_bar(position="stack", stat="identity") +
-  theme(legend.position = "none",plot.title = element_text(hjust=0.5), axis.title.x=element_blank(), 
+  theme(legend.position = "none",plot.title = element_text(hjust=0.5, size=size_title), axis.title.x=element_blank(), 
         axis.title.y=element_blank(),  axis.text.x=element_blank())  + 
-  scale_fill_manual(values=c("#845EC2","#00C9A7","#4D8076")) #+ ggtitle("X-F-MAF")
+  scale_fill_manual(values=c("#845EC2","#00C9A7","#4D8076")) + ggtitle("X-F-MAF")
 
 ## Plotting XFMARX
 df_XFMARX <- data.frame(matrix(ncol=3, nrow=length(horizons)*3))
@@ -279,9 +282,9 @@ df_XFMARX_2 <- df_XFMARX[order(df_XFMARX$X1),]
 
 plot_VI_XFMARX <- ggplot(df_XFMARX_2, aes(fill=X2, y=X3, x=X1)) + 
   geom_bar(position="stack", stat="identity") +
-  theme(legend.position = "none",plot.title = element_text(hjust=0.5), axis.title.x=element_blank(), 
+  theme(legend.position = "none",plot.title = element_text(hjust=0.5, size=size_title), axis.title.x=element_blank(), 
         axis.title.y=element_blank(),  axis.text.x=element_blank())  + 
-  scale_fill_manual(values=c("#845EC2","#009EFA","#4D8076")) #+ ggtitle("X-F-MARX")
+  scale_fill_manual(values=c("#845EC2","#009EFA","#4D8076")) + ggtitle("X-F-MARX")
 
 ## Plotting XMAFMARX
 df_XMAFMARX <- data.frame(matrix(ncol=3, nrow=length(horizons)*3))
@@ -295,9 +298,9 @@ df_XMAFMARX_2 <- df_XMAFMARX[order(df_XMAFMARX$X1),]
 
 plot_VI_XMAFMARX <- ggplot(df_XMAFMARX_2, aes(fill=X2, y=X3, x=X1)) + 
   geom_bar(position="stack", stat="identity") +
-  theme(legend.position = "none",plot.title = element_text(hjust=0.5), axis.title.x=element_blank(), 
+  theme(legend.position = "none",plot.title = element_text(hjust=0.5, size=size_title), axis.title.x=element_blank(), 
         axis.title.y=element_blank(),  axis.text.x=element_blank()) + 
-  scale_fill_manual(values=c("#00C9A7","#009EFA","#4D8076")) #+ ggtitle("X-MAF-MARX")
+  scale_fill_manual(values=c("#00C9A7","#009EFA","#4D8076")) + ggtitle("X-MAF-MARX")
 
 ## Plotting FMAFMARX
 df_FMAFMARX <- data.frame(matrix(ncol=3, nrow=length(horizons)*3))
@@ -311,9 +314,9 @@ df_FMAFMARX_2 <- df_FMAFMARX[order(df_FMAFMARX$X1),]
 
 plot_VI_FMAFMARX <- ggplot(df_FMAFMARX_2, aes(fill=X2, y=X3, x=X1)) + 
   geom_bar(position="stack", stat="identity") +
-theme(legend.position = "none", plot.title = element_text(hjust=0.5), axis.title.x=element_blank(), 
-      axis.title.y=element_blank(),  axis.text.x=element_blank()) + 
-  scale_fill_manual(values=c("#845EC2","#00C9A7","#009EFA")) #+ ggtitle("F-MAF-MARX")
+  theme(legend.position = "none", plot.title = element_text(hjust=0.5, size=size_title), axis.title.x=element_blank(), 
+        axis.title.y=element_blank(),  axis.text.x=element_blank()) + 
+  scale_fill_manual(values=c("#845EC2","#00C9A7","#009EFA")) + ggtitle("F-MAF-MARX")
 
 ## Plotting XF
 df_XF <- data.frame(matrix(ncol=3, nrow=length(horizons)*2))
@@ -326,9 +329,8 @@ df_XF_2 <- df_XF[order(df_XF$X1),]
 
 plot_VI_XF <- ggplot(df_XF_2, aes(fill=X2, y=X3, x=X1)) + 
   geom_bar(position="stack", stat="identity") +
-  theme(plot.title = element_text(hjust=0.5), axis.title.x=element_blank(), 
-        axis.title.y=element_blank(),  axis.text.x=element_blank()) 
-#+ scale_fill_manual(values=c("#845EC2", "#4D8076")) + theme(legend.position = "none") #+ ggtitle("X-F")
+  theme(plot.title = element_text(hjust=0.5, size=size_title), axis.title.x=element_blank(), 
+        axis.title.y=element_blank(),  axis.text.x=element_blank()) + scale_fill_manual(values=c("#845EC2", "#4D8076")) + theme(legend.position = "none") + ggtitle("X-F")
 
 ## Plotting XMAF
 df_XMAF <- data.frame(matrix(ncol=3, nrow=length(horizons)*2))
@@ -341,9 +343,8 @@ df_XMAF_2 <- df_XMAF[order(df_XMAF$X1),]
 
 plot_VI_XMAF <- ggplot(df_XMAF_2, aes(fill=X2, y=X3, x=X1)) + 
   geom_bar(position="stack", stat="identity") +
-  theme(plot.title = element_text(hjust=0.5), axis.title.x=element_blank(), 
-        axis.title.y=element_blank(),  axis.text.x=element_blank()) 
-#+ scale_fill_manual(values=c("#845EC2", "#4D8076")) + theme(legend.position = "none") #+ ggtitle("X-F")
+  theme(plot.title = element_text(hjust=0.5, size=size_title), axis.title.x=element_blank(), 
+        axis.title.y=element_blank(),  axis.text.x=element_blank()) + scale_fill_manual(values=c("#00C9A7", "#4D8076")) + theme(legend.position = "none") + ggtitle("X-MAF")
 
 ## Plotting XMARX
 df_XMARX <- data.frame(matrix(ncol=3, nrow=length(horizons)*2))
@@ -356,9 +357,8 @@ df_XMARX_2 <- df_XMARX[order(df_XMARX$X1),]
 
 plot_VI_XMARX <- ggplot(df_XMARX_2, aes(fill=X2, y=X3, x=X1)) + 
   geom_bar(position="stack", stat="identity") +
-  theme(plot.title = element_text(hjust=0.5), axis.title.x=element_blank(), 
-        axis.title.y=element_blank(),  axis.text.x=element_blank()) 
-#+ scale_fill_manual(values=c("#845EC2", "#4D8076")) + theme(legend.position = "none") #+ ggtitle("X-F")
+  theme(plot.title = element_text(hjust=0.5, size=size_title), axis.title.x=element_blank(), 
+        axis.title.y=element_blank(),  axis.text.x=element_blank()) + scale_fill_manual(values=c("#009EFA", "#4D8076")) + theme(legend.position = "none") + ggtitle("X-MARX")
 
 ## Plotting FMAF
 df_FMAF <- data.frame(matrix(ncol=3, nrow=length(horizons)*2))
@@ -371,9 +371,8 @@ df_FMAF_2 <- df_FMAF[order(df_FMAF$X1),]
 
 plot_VI_FMAF <- ggplot(df_FMAF_2, aes(fill=X2, y=X3, x=X1)) + 
   geom_bar(position="stack", stat="identity") +
-  theme(plot.title = element_text(hjust=0.5), axis.title.x=element_blank(), 
-        axis.title.y=element_blank(),  axis.text.x=element_blank()) 
-#+ scale_fill_manual(values=c("#845EC2", "#4D8076")) + theme(legend.position = "none") #+ ggtitle("X-F")
+  theme(plot.title = element_text(hjust=0.5, size=size_title), axis.title.x=element_blank(), 
+        axis.title.y=element_blank(),  axis.text.x=element_blank()) + scale_fill_manual(values=c("#845EC2", "#00C9A7")) + theme(legend.position = "none") + ggtitle("F-MAF")
 
 ## Plotting FMARX
 df_FMARX <- data.frame(matrix(ncol=3, nrow=length(horizons)*2))
@@ -386,9 +385,8 @@ df_FMARX_2 <- df_FMARX[order(df_FMARX$X1),]
 
 plot_VI_FMARX <- ggplot(df_FMARX_2, aes(fill=X2, y=X3, x=X1)) + 
   geom_bar(position="stack", stat="identity") +
-  theme(plot.title = element_text(hjust=0.5), axis.title.x=element_blank(), 
-        axis.title.y=element_blank(),  axis.text.x=element_blank()) 
-#+ scale_fill_manual(values=c("#845EC2", "#4D8076")) + theme(legend.position = "none") #+ ggtitle("X-F")
+  theme(plot.title = element_text(hjust=0.5, size=size_title), axis.title.x=element_blank(), 
+        axis.title.y=element_blank(),  axis.text.x=element_blank()) + scale_fill_manual(values=c("#845EC2", "#009EFA")) + theme(legend.position = "none") + ggtitle("F-MARX")
 
 
 #### ---- PLOTTING ALL ----
