@@ -202,11 +202,12 @@ write.csv(PA_RF_X_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R 
 write.csv(PA_RF_F_MAF_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/CPB_PA_RF_F_MAF_forecast.csv", row.names=FALSE)
 write.csv(PA_RF_F_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/CPB_PA_RF_F_MARX_forecast.csv", row.names=FALSE)
 write.csv(PA_RF_MAF_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/CPB_PA_RF_MAF_MARX_forecast.csv", row.names=FALSE)
-write.csv(PA_RF_X_F_MAF_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/CPB_PA_RF_X_F_MAF_forecast.csv", row.names=FALSE)
-write.csv(PA_RF_X_F_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/CPB_PA_RF_X_F_MARX_forecast.csv", row.names=FALSE)
-write.csv(PA_RF_X_MAF_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/CPB_PA_RF_X_MAF_MARX_forecast.csv", row.names=FALSE)
-write.csv(PA_RF_F_MAF_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/CPB_PA_RF_F_MAF_MARX_forecast.csv", row.names=FALSE)
+write.csv(PA_RF_X_F_MAF_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/CPB_PA_RF_X_F_MAF_forecast2.csv", row.names=FALSE)
+write.csv(PA_RF_X_F_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/CPB_PA_RF_X_F_MARX_forecast2.csv", row.names=FALSE)
+write.csv(PA_RF_X_MAF_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/CPB_PA_RF_X_MAF_MARX_forecast2.csv", row.names=FALSE)
+write.csv(PA_RF_F_MAF_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/CPB_PA_RF_F_MAF_MARX_forecast2.csv", row.names=FALSE)
 write.csv(PA_RF_X_F_MAF_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/CPB_PA_RF_X_F_MAF_MARX_forecast.csv", row.names=FALSE)
 
 write.csv(PA_RMSE_RF, "C:/Users/Gebruiker/Documents/GitHub/project_cpb/Data en Forecasts/Output/CPB/PA_rmse_rf.csv", row.names=TRUE)
+write.csv(PA_RMSE_RF, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/PA_rmse_rf2.csv", row.names=FALSE)
 
