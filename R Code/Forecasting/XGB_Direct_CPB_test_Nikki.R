@@ -101,12 +101,13 @@ n_combinations <- 15
 library(ParBayesianOptimization)
 library(xgboost)
 
-horizons <- list(3) #6) #, 12, 18, 24)
+dutch_forecasts <- c(434,315) #Begin forecasting from 315
+start_forecast <- 315
+end_forecast <- 434
+horizons <- list(3, 6, 12, 18, 24)
 Unempl <- df[,2]
-n_forecast <- 434-315 # CPB time window
-y_real <- Unempl[316:434]
-
-dutch_forecasts <- c(434,315) #Begin forecasting from 316
+n_forecast <- end_forecast-start_forecast # CPB time window
+y_real <- Unempl[start_forecast:end_forecast]
 
 #ntrees <- 200 #Accurate but slow (RF)
 
@@ -122,8 +123,8 @@ Forecasting_function <- function(y, Z, n_forecast, horizons){
     
     i <- i+1
     
-    train_x <- y_Z[(P_MAF+1):315,2:ncol(y_Z)]
-    train_y <- y_Z[(P_MAF+1):315,1]
+    train_x <- y_Z[(P_MAF+1):start_forecast,2:ncol(y_Z)]
+    train_y <- y_Z[(P_MAF+1):start_forecast,1]
     
     #Optimization
     set.seed(2021)
@@ -146,7 +147,7 @@ Forecasting_function <- function(y, Z, n_forecast, horizons){
         stratified = FALSE) # Do we set this to TRUE or FALSE?
       
       return(list(
-        Score = min(xgbcv$evaluation_log$test_rmse_mean), #max --> min; we MINIMIZE RMSE right?
+        Score = max(-xgbcv$evaluation_log$test_rmse_mean), #max --> min; we MINIMIZE RMSE right?
         nrounds = xgbcv$best_iteration #iteration number with the best evaluation metric value
       )
       )
@@ -166,16 +167,17 @@ Forecasting_function <- function(y, Z, n_forecast, horizons){
     #print(opt_obj$scoreSummary)
     numrounds <- opt_obj$scoreSummary$nrounds[
       which(opt_obj$scoreSummary$Score
-            == min(opt_obj$scoreSummary$Score))] #--> CHANGE TO MIN????
+            == max(opt_obj$scoreSummary$Score))] #--> CHANGE TO MIN????
     print(numrounds)
     
-    for (f in 116:n_forecast){
+    #for (f in 1:n_forecast){
+    for (f in 1:5){
       # Boosted Trees
       #print(f)
-      train_x <- y_Z[(P_MAF+1):(315+f-1),2:ncol(y_Z)]
-      train_y <- y_Z[(P_MAF+1):(315+f-1),1]
-      test_x <- y_Z[315+f,2:ncol(y_Z)]
-      test_y <- y_Z[315+f,1]
+      train_x <- y_Z[(P_MAF+1):(start_forecast+f-1),2:ncol(y_Z)]
+      train_y <- y_Z[(P_MAF+1):(start_forecast+f-1),1]
+      test_x <- y_Z[start_forecast+f,2:ncol(y_Z)]
+      test_y <- y_Z[start_forecast+f,1]
       
       X_BT_tuned <- xgboost(params = params,
                             data = as.matrix(train_x),
@@ -185,8 +187,6 @@ Forecasting_function <- function(y, Z, n_forecast, horizons){
                             eval_metric = "rmse", #regression
                             verbose = 0) #NIET output printen 
       
-      print(test_x)
-      print(test_y)
       xgb_test <- xgb.DMatrix(data = as.matrix(test_x), label = as.matrix(test_y))
       
       BT_y_forecast[f,i] = predict(X_BT_tuned, xgb_test)
@@ -196,6 +196,69 @@ Forecasting_function <- function(y, Z, n_forecast, horizons){
   }
   return(BT_y_forecast)
 }
+
+Forecasting_function2 <- function(y, Z, n_forecast, horizons){
+  y_Z <- cbind(y, Z)
+  BT_y_forecast <- data.frame(matrix(ncol = length(horizons), nrow = n_forecast))
+  
+  i <- 0
+  for (h in horizons){
+    shift_y = as.data.frame(shift(y,n=h, type = 'lead', give.names=TRUE))
+    colnames(shift_y) = 'y'
+    y_Z <- cbind(shift_y, Z)
+    
+    i <- i+1
+    
+    train_x <- y_Z[(P_MAF+1):start_forecast,2:ncol(y_Z)]
+    train_y <- y_Z[(P_MAF+1):start_forecast,1]
+    
+    #Optimization
+    set.seed(2021)
+  
+    params <- list(eta = 0.3)
+    numrounds <- 150
+    
+    for (f in 1:n_forecast){
+    #for (f in 1:5){
+      # Boosted Trees
+      #print(f)
+      train_x <- y_Z[(P_MAF+1):(start_forecast+f-1),2:ncol(y_Z)]
+      train_y <- y_Z[(P_MAF+1):(start_forecast+f-1),1]
+      test_x <- y_Z[start_forecast+f,2:ncol(y_Z)]
+      test_y <- y_Z[start_forecast+f,1]
+      
+      X_BT_tuned <- xgboost(params = params,
+                            data = as.matrix(train_x),
+                            label = as.matrix(train_y),
+                            nrounds = numrounds, #max number of rounds to tune trained model
+                            max.depth = 5, #Coulombe
+                            eval_metric = "rmse", #regression
+                            verbose = 0) #NIET output printen 
+      
+      xgb_test <- xgb.DMatrix(data = as.matrix(test_x), label = as.matrix(test_y))
+      
+      BT_y_forecast[f,i] = predict(X_BT_tuned, xgb_test)
+      
+    }
+    colnames(BT_y_forecast)[i]=paste('h=',h,sep='')
+  }
+  return(BT_y_forecast)
+}
+BT_X_forecast2 <- Forecasting_function2(Unempl, X, n_forecast, horizons)
+BT_F_forecast2 <- Forecasting_function2(Unempl, F, n_forecast, horizons)
+BT_MAF_forecast2 <- Forecasting_function2(Unempl, MAF, n_forecast, horizons)
+BT_MARX_forecast2 <- Forecasting_function2(Unempl, MARX, n_forecast, horizons)
+BT_X_F_forecast2 <- Forecasting_function2(Unempl, X_F, n_forecast, horizons)
+BT_X_MAF_forecast2 <- Forecasting_function2(Unempl, X_MAF, n_forecast, horizons)
+BT_X_MARX_forecast2 <- Forecasting_function2(Unempl, X_MARX, n_forecast, horizons)
+BT_F_MAF_forecast2 <- Forecasting_function2(Unempl, F_MAF, n_forecast, horizons)
+BT_F_MARX_forecast2 <- Forecasting_function2(Unempl, F_MARX, n_forecast, horizons)
+BT_MAF_MARX_forecast2 <- Forecasting_function2(Unempl, MAF_MARX, n_forecast, horizons)
+BT_X_F_MAF_forecast2 <- Forecasting_function2(Unempl, X_F_MAF, n_forecast, horizons)
+BT_X_F_MARX_forecast2 <- Forecasting_function2(Unempl, X_F_MARX, n_forecast, horizons)
+BT_X_MAF_MARX_forecast2 <- Forecasting_function2(Unempl, X_MAF_MARX, n_forecast, horizons)
+BT_F_MAF_MARX_forecast2 <- Forecasting_function2(Unempl, F_MAF_MARX, n_forecast, horizons)
+BT_X_F_MAF_MARX_forecast2 <- Forecasting_function2(Unempl, X_F_MAF_MARX, n_forecast, horizons)
 
 ## -- Forecasting Z -- 
 BT_X_forecast <- Forecasting_function(Unempl, X, n_forecast, horizons)

@@ -65,48 +65,54 @@ computing_rmse <- function(data_frame,the_n_TL,the_h,the_predictors,the_n_F,the_
   #Computing Residuals and RMSE
   resids <- na.omit(prediction[(nrow(data_frame)-the_poos+1):nrow(data_frame)] - data_frame[(nrow(data_frame)-the_poos+1):nrow(data_frame),"UNRATE"])
   rmse <- sqrt(mean(resids^2))
-  return(c(prediction,rmse))
+  return(rmse)
 }
 
 #Optimize RMSE Over Combinations n_Factors, n_Lags, n_Lags_Predictor
-results_1m <- matrix(, nrow = 12, ncol = 12)
-results_3m <- matrix(, nrow = 12, ncol = 12)
-results_6m <- matrix(, nrow = 12, ncol = 12)
-results_9m <- matrix(, nrow = 12, ncol = 12)
-results_12m <- matrix(, nrow = 12, ncol = 12)
-results_24m <- matrix(, nrow = 12, ncol = 12)
-
+results_1m_f <- matrix(, nrow = 12, ncol = 12)
+results_3m_f <- matrix(, nrow = 12, ncol = 12)
+results_6m_f <- matrix(, nrow = 12, ncol = 12)
+results_9m_f <- matrix(, nrow = 12, ncol = 12)
+results_12m_f <- matrix(, nrow = 12, ncol = 12)
+results_24m_f <- matrix(, nrow = 12, ncol = 12)
+k<- 0
 for (i in 1:12) {     #number of factors
   for (j in 1:12) {   #number of lags
     start_1 <- Sys.time()
-    results_1m[i,j] <- computing_rmse(df,the_n_TL = j, the_h = 1, the_predictors = predictors, the_n_F = i, the_n_L = j, the_poos = 456)
+    results_1m_f[i,j] <- computing_rmse(df,the_n_TL = i, the_h = 1, the_predictors = predictors, the_n_F = 3, the_n_L = j, the_poos = 456)
     end_1 <- Sys.time()
-    print(c(i,j,1,end_1-start_1))
+    k <- k+1
+    print(c(as.integer(i),as.integer(j),as.integer(1),as.integer(end_1-start_1),100*k/864))
     
     start_3 <- Sys.time()
-    results_3m[i,j] <- computing_rmse(df,the_n_TL = j, the_h = 3, the_predictors = predictors, the_n_F = i, the_n_L = j, the_poos = 456)
+    results_3m_f[i,j] <- computing_rmse(df,the_n_TL = i, the_h = 3, the_predictors = predictors, the_n_F = 3, the_n_L = j, the_poos = 456)
     end_3 <- Sys.time()
-    print(c(i,j,3,end_3-start_3))
+    k <- k+1
+    print(c(as.integer(i),as.integer(j),as.integer(3),as.integer(end_3-start_3),100*k/864))
     
     start_6 <- Sys.time()
-    results_6m[i,j] <- computing_rmse(df,the_n_TL = j, the_h = 6, the_predictors = predictors, the_n_F = i, the_n_L = j, the_poos = 456)
+    results_6m_f[i,j] <- computing_rmse(df,the_n_TL = i, the_h = 6, the_predictors = predictors, the_n_F = 3, the_n_L = j, the_poos = 456)
     end_6 <- Sys.time()
-    print(c(i,j,6,end_6-start_6))
+    k <- k+1
+    print(c(as.integer(i),as.integer(j),as.integer(6),as.integer(end_6-start_6),100*k/864))
     
     start_9 <- Sys.time()
-    results_9m[i,j] <- computing_rmse(df,the_n_TL = j, the_h = 9, the_predictors = predictors, the_n_F = i, the_n_L = j, the_poos = 456)
+    results_9m_f[i,j] <- computing_rmse(df,the_n_TL = i, the_h = 9, the_predictors = predictors, the_n_F = 3, the_n_L = j, the_poos = 456)
     end_9 <- Sys.time()
-    print(c(i,j,9,end_12-start_9))
+    k <- k+1
+    print(c(as.integer(i),as.integer(j),as.integer(9),as.integer(end_9-start_9),100*k/864))
     
     start_12 <- Sys.time()
-    results_12m[i,j] <- computing_rmse(df,the_n_TL = j, the_h = 12, the_predictors = predictors, the_n_F = i, the_n_L = j, the_poos = 456)
+    results_12m_f[i,j] <- computing_rmse(df,the_n_TL = i, the_h = 12, the_predictors = predictors, the_n_F = 3, the_n_L = j, the_poos = 456)
     end_12 <- Sys.time()
-    print(c(i,j,12,end_12-start_12))
+    k <- k+1
+    print(c(as.integer(i),as.integer(j),as.integer(12),as.integer(end_12-start_12),100*k/864))
     
     start_24 <- Sys.time()
-    results_24m[i,j] <- computing_rmse(df,the_n_TL = j, the_h = 24, the_predictors = predictors, the_n_F = i, the_n_L = j, the_poos = 46)
+    results_24m_f[i,j] <- computing_rmse(df,the_n_TL = i, the_h = 24, the_predictors = predictors, the_n_F = 3, the_n_L = j, the_poos = 456)
     end_24 <- Sys.time()
-    print(c(i,j,24,end_24-start_24))
+    k <- k+1
+    print(c(as.integer(i),as.integer(j),as.integer(24),as.integer(end_24-start_24),100*k/864))
   }
 }
 
@@ -121,3 +127,11 @@ h_24 <- computing_rmse(df,4,the_h=24,predictors,3,3,456)
 
 forecasts <- as.data.frame(cbind(h_1,h_3,h_6,h_9,h_12,h_24))
 write.csv(forecasts, "~/Desktop/forecasts_v2.csv", row.names=FALSE)
+
+write.csv(results_1m_f, "~/Desktop/rmse_1m_f.csv")
+write.csv(results_3m_f, "~/Desktop/rmse_3m_f.csv")
+write.csv(results_6m_f, "~/Desktop/rmse_6m_f.csv")
+write.csv(results_9m_f, "~/Desktop/rmse_9m_f.csv")
+write.csv(results_12m_f, "~/Desktop/rmse_12m_f.csv")
+write.csv(results_24m_f, "~/Desktop/rmse_24m_f.csv")
+

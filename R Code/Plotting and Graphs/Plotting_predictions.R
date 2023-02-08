@@ -62,7 +62,7 @@ box(col = "black")
 Rsquared_function <- function(y_actual, y_pred){
   e_p <- sum((y_actual - y_pred)^2)
   e_m <- sum((y_actual - mean(y_actual))^2)
-  Rsquared <- 1-e_p/e_m
+  Rsquared <- 1-(e_p/e_m)
   return(Rsquared)
 }
 

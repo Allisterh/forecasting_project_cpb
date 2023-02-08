@@ -3,15 +3,10 @@ library(BVAR)
 library(randomForest)
 
 #Nikki:
-#df <- read.csv("~/Documents/MSc Econometrics/Blok 3/Seminar/R code/data-eur2023.csv", row.names=1)
 #df <- read.csv("~/Documents/MSc Econometrics/Blok 3/Seminar/R code/data122022.csv", row.names=1)
 
 # Dees:
 #df <- fredmd("D:/EUR/Master/Seminar Case studies in Applied Econometrics/R code/data122022.csv")
-
-#Sophia:
-df <- read.csv("C:/Users/sophi_j0d2ugq/OneDrive/Documents/Data Seminar/data-eur2023.csv", row.names=1)
-
 
 ### ---- FEATURE ENGINEERING ----
 library(vars)
@@ -19,9 +14,9 @@ new_df <- df[-c(1,2)]
 n_var <- ncol(new_df)
 T <- nrow(new_df)
 regressor_matrix <- new_df
-X_lags <- 12 # CPB wil er 4
+X_lags <- 12 
 n_Factors <- 3 
-F_lags <- 12 #Paper Coulombe (check FREDMD: Coulombe gebruikt er 12, CPB wil er 4)
+F_lags <- 12 #Paper Coulombe (check FREDMD: Coulombe gebruikt er 12)
 P_MAF <- 12 #Paper Coulombe
 n_MAF <- 3 #Paper Coulombe
 P_MARX <- 12 #Paper Coulombe
@@ -92,7 +87,7 @@ MAF <- MAF_function(scaled_X, X_lags, T, n_var, P_MAF, n_MAF, FALSE)
 MARX <- MARX_function(regressor_matrix, P_MARX, n_var)
 
 #for (i in 1:ncol(regressor_matrix)) {
- # print(paste(colnames(regressor_matrix)[i],var(regressor_matrix[,i]),sep = ' '))}
+# print(paste(colnames(regressor_matrix)[i],var(regressor_matrix[,i]),sep = ' '))}
 
 X_F <- cbind(X, F)
 X_MAF <- cbind(X, MAF)
@@ -111,12 +106,11 @@ n_combinations <- 15
 ### ---- FORECASTING ----
 Unempl <- unemployment
 rownames(Unempl) <- as.data.frame(rownames(unemployment))
-horizons <- list(3) # 6, 12, 18, 24
-n_forecast <- 435-315 # Coulombe time window frame 1980M1 - 2017M12
-y_real <- unemployment[315:434,]
+horizons <- list(3, 6, 12, 18, 24)
+n_forecast <- 706-251 # Coulombe time window frame 1980M1 - 2017M12
+y_real <- unemployment[252:706,]
 
-dutch_forecasts <- c(435,315)
-#coulombe_forecasts <- c(706,251)
+coulombe_forecasts <- c(706,251)
 
 Forecasting_function <- function(y, Z, n_forecast, horizons, ntrees){
   RF_y_forecast <- data.frame(matrix(ncol = length(horizons), nrow = n_forecast))
@@ -129,8 +123,8 @@ Forecasting_function <- function(y, Z, n_forecast, horizons, ntrees){
     i <- i+1
     nu <- Sys.time()
     for (f in 1:n_forecast){
-      y_Z_train <- y_Z[F_lags-1:314+f-1,] # Number of lags here is 12
-      y_Z_test <- y_Z[314+f,]
+      y_Z_train <- y_Z[(P_MAF+1):251+f-1,] # Number of lags here is 12, check index?
+      y_Z_test <- y_Z[251+f,]
       
       # Random Forest
       X.rf <- randomForest(y ~ ., 
@@ -205,21 +199,21 @@ rownames(RMSE_RF) <- c("X", "F", "MAF", "MARX", "X,F", "X,MAF", "X,MARX", "F,MAF
 colnames(RMSE_RF) <- c("h=3", "h=6", "h=12", "h=18", "h=24")
 
 # Saving Prediction Tables
-write.csv(RF_X_forecast, "C:/Users/sophi_j0d2ugq/OneDrive/Documents/GitHub/project_cpb/Data en Forecasts/Output/CPB/Direct/CPB_RF_X_forecast.csv", row.names=FALSE)
-write.csv(RF_F_forecast, "C:/Users/sophi_j0d2ugq/OneDrive/Documents/GitHub/project_cpb/Data en Forecasts/Output/CPB/Direct/CPB_RF_F_forecast.csv", row.names=FALSE)
-write.csv(RF_MAF_forecast, "C:/Users/sophi_j0d2ugq/OneDrive/Documents/GitHub/project_cpb/Data en Forecasts/Output/CPB/Direct/CPB_RF_MAF_forecast.csv", row.names=FALSE)
-write.csv(RF_MARX_forecast, "C:/Users/sophi_j0d2ugq/OneDrive/Documents/GitHub/project_cpb/Data en Forecasts/Output/CPB/Direct/CPB_RF_MARX_forecast.csv", row.names=FALSE)
-write.csv(RF_X_F_forecast, "C:/Users/sophi_j0d2ugq/OneDrive/Documents/GitHub/project_cpb/Data en Forecasts/Output/CPB/Direct/CPB_RF_X_F_forecast.csv", row.names=FALSE)
-write.csv(RF_X_MAF_forecast, "C:/Users/sophi_j0d2ugq/OneDrive/Documents/GitHub/project_cpb/Data en Forecasts/Output/CPB/Direct/CPB_RF_X_MAF_forecast.csv", row.names=FALSE)
-write.csv(RF_X_MARX_forecast, "C:/Users/sophi_j0d2ugq/OneDrive/Documents/GitHub/project_cpb/Data en Forecasts/Output/CPB/Direct/CPB_RF_X_MARX_forecast.csv", row.names=FALSE)
-write.csv(RF_F_MAF_forecast, "C:/Users/sophi_j0d2ugq/OneDrive/Documents/GitHub/project_cpb/Data en Forecasts/Output/CPB/Direct/CPB_RF_F_MAF_forecast.csv", row.names=FALSE)
-write.csv(RF_F_MARX_forecast, "C:/Users/sophi_j0d2ugq/OneDrive/Documents/GitHub/project_cpb/Data en Forecasts/Output/CPB/Direct/CPB_RF_F_MARX_forecast.csv", row.names=FALSE)
-write.csv(RF_MAF_MARX_forecast, "C:/Users/sophi_j0d2ugq/OneDrive/Documents/GitHub/project_cpb/Data en Forecasts/Output/CPB/Direct/CPB_RF_MAF_MARX_forecast.csv", row.names=FALSE)
-write.csv(RF_X_F_MAF_forecast, "C:/Users/sophi_j0d2ugq/OneDrive/Documents/GitHub/project_cpb/Data en Forecasts/Output/CPB/DirectMAF_forecast.csv", row.names=FALSE)
-write.csv(RF_X_F_MARX_forecast, "C:/Users/sophi_j0d2ugq/OneDrive/Documents/GitHub/project_cpb/Data en Forecasts/Output/CPB/Direct/CPB_RF_X_F_MARX_forecast.csv", row.names=FALSE)
-write.csv(RF_X_MAF_MARX_forecast, "C:/Users/sophi_j0d2ugq/OneDrive/Documents/GitHub/project_cpb/Data en Forecasts/Output/CPB/Direct/CPB_RF_X_MAF_MARX_forecast.csv", row.names=FALSE)
-write.csv(RF_F_MAF_MARX_forecast, "C:/Users/sophi_j0d2ugq/OneDrive/Documents/GitHub/project_cpb/Data en Forecasts/Output/CPB/Direct/CPB_RF_F_MAF_MARX_forecast.csv", row.names=FALSE)
-write.csv(RF_X_F_MAF_MARX_forecast, "C:/Users/sophi_j0d2ugq/OneDrive/Documents/GitHub/project_cpb/Data en Forecasts/Output/CPB/Direct/CPB_RF_X_F_MAF_MARX_forecast.csv", row.names=FALSE)
+write.csv(RF_X_forecast, "C:/Users/sophi_j0d2ugq/OneDrive/Documents/GitHub/project_cpb/Data en Forecasts/Output/Coulombe/Coulombe_RF_X_forecast.csv", row.names=FALSE)
+write.csv(RF_F_forecast, "C:/Users/sophi_j0d2ugq/OneDrive/Documents/GitHub/project_cpb/Data en Forecasts/Output/Coulombe/Coulombe_RF_F_forecast.csv", row.names=FALSE)
+write.csv(RF_MAF_forecast, "C:/Users/sophi_j0d2ugq/OneDrive/Documents/GitHub/project_cpb/Data en Forecasts/Output/Coulombe/Coulombe_RF_MAF_forecast.csv", row.names=FALSE)
+write.csv(RF_MARX_forecast, "C:/Users/sophi_j0d2ugq/OneDrive/Documents/GitHub/project_cpb/Data en Forecasts/Output/Coulombe/Coulombe_RF_MARX_forecast.csv", row.names=FALSE)
+write.csv(RF_X_F_forecast, "C:/Users/sophi_j0d2ugq/OneDrive/Documents/GitHub/project_cpb/Data en Forecasts/Output/Coulombe/Coulombe_RF_X_F_forecast.csv", row.names=FALSE)
+write.csv(RF_X_MAF_forecast, "C:/Users/sophi_j0d2ugq/OneDrive/Documents/GitHub/project_cpb/Data en Forecasts/Output/Coulombe/Coulombe_RF_X_MAF_forecast.csv", row.names=FALSE)
+write.csv(RF_X_MARX_forecast, "C:/Users/sophi_j0d2ugq/OneDrive/Documents/GitHub/project_cpb/Data en Forecasts/Output/Coulombe/Coulombe_RF_X_MARX_forecast.csv", row.names=FALSE)
+write.csv(RF_F_MAF_forecast, "C:/Users/sophi_j0d2ugq/OneDrive/Documents/GitHub/project_cpb/Data en Forecasts/Output/Coulombe/Coulombe_RF_F_MAF_forecast.csv", row.names=FALSE)
+write.csv(RF_F_MARX_forecast, "C:/Users/sophi_j0d2ugq/OneDrive/Documents/GitHub/project_cpb/Data en Forecasts/Output/Coulombe/Coulombe_RF_F_MARX_forecast.csv", row.names=FALSE)
+write.csv(RF_MAF_MARX_forecast, "C:/Users/sophi_j0d2ugq/OneDrive/Documents/GitHub/project_cpb/Data en Forecasts/Output/Coulombe/Coulombe_RF_MAF_MARX_forecast.csv", row.names=FALSE)
+write.csv(RF_X_F_MAF_forecast, "C:/Users/sophi_j0d2ugq/OneDrive/Documents/GitHub/project_cpb/Data en Forecasts/Output/Coulombe/Coulombe_RF_X_F_MAF_forecast.csv", row.names=FALSE)
+write.csv(RF_X_F_MARX_forecast, "C:/Users/sophi_j0d2ugq/OneDrive/Documents/GitHub/project_cpb/Data en Forecasts/Output/Coulombe/Coulombe_RF_X_F_MARX_forecast.csv", row.names=FALSE)
+write.csv(RF_X_MAF_MARX_forecast, "C:/Users/sophi_j0d2ugq/OneDrive/Documents/GitHub/project_cpb/Data en Forecasts/Output/Coulombe/Coulombe_RF_X_MAF_MARX_forecast.csv", row.names=FALSE)
+write.csv(RF_F_MAF_MARX_forecast, "C:/Users/sophi_j0d2ugq/OneDrive/Documents/GitHub/project_cpb/Data en Forecasts/Output/Coulombe/Coulombe_RF_F_MAF_MARX_forecast.csv", row.names=FALSE)
+write.csv(RF_X_F_MAF_MARX_forecast, "C:/Users/sophi_j0d2ugq/OneDrive/Documents/GitHub/project_cpb/Data en Forecasts/Output/Coulombe/Coulombe_RF_X_F_MAF_MARX_forecast.csv", row.names=FALSE)
 
-write.csv(RMSE_RF, "C:/Users/sophi_j0d2ugq/OneDrive/Documents/GitHub/project_cpb/Data en Forecasts/Output/CPB/Direct/rmse_rf.csv", row.names=TRUE)
+write.csv(RMSE_RF, "C:/Users/sophi_j0d2ugq/OneDrive/Documents/GitHub/project_cpb/Data en Forecasts/Output/Coulombe/rmse_rf.csv", row.names=TRUE)
 

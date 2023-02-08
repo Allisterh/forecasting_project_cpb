@@ -1,8 +1,7 @@
 #Clearing Environment
 rm(list=ls())
 
-#Nikki:
-df <- read.csv("~/Documents/MSc Econometrics/Blok 3/Seminar/R code/data-eur2023.csv", row.names=1)
+df <- read.csv("/Users/vincentvanpul/Desktop/data-eur2023.csv", row.names=1)
 
 ### ---- FEATURE ENGINEERING ----
 library(vars)
@@ -101,32 +100,32 @@ n_combinations <- 15
 library(ParBayesianOptimization)
 library(xgboost)
 
-horizons <- list(3) #6) #, 12, 18, 24)
+horizons <- list(3, 6, 12, 18, 24)
 Unempl <- df[,2]
-n_forecast <- 434-315 # CPB time window
-y_real <- Unempl[316:434]
-
-dutch_forecasts <- c(434,315) #Begin forecasting from 316
-
-#ntrees <- 200 #Accurate but slow (RF)
+n_forecast <- 120 # CPB time window
+y_real <- Unempl[315:434]
+ntrees <- 200 #Accurate but slow
 
 Forecasting_function <- function(y, Z, n_forecast, horizons){
-  y_Z <- cbind(y, Z)
   BT_y_forecast <- data.frame(matrix(ncol = length(horizons), nrow = n_forecast))
-  
   i <- 0
+  
   for (h in horizons){
+    cat("", sep="\n\n")
+    cat("### Horizon: ", h)
+    cat("", sep="\n\n")
     shift_y = as.data.frame(shift(y,n=h, type = 'lead', give.names=TRUE))
     colnames(shift_y) = 'y'
-    y_Z <- cbind(shift_y, Z)
+    y_Z <- na.omit(cbind(shift_y, Z))
     
     i <- i+1
     
-    train_x <- y_Z[(P_MAF+1):315,2:ncol(y_Z)]
-    train_y <- y_Z[(P_MAF+1):315,1]
+    train_x <- y_Z[1:(nrow(y_Z)-n_forecast),2:ncol(y_Z)]
+    train_y <- y_Z[1:(nrow(y_Z)-n_forecast),1]
     
     #Optimization
     set.seed(2021)
+    bounds <- list(eta = c(0, 1))
     
     scoring_function <- function(eta) {
       library(xgboost)
@@ -151,42 +150,39 @@ Forecasting_function <- function(y, Z, n_forecast, horizons){
       )
       )
     }
-    bounds <- list(eta = c(0, 1))
     
     opt_obj <- bayesOpt(FUN = scoring_function, bounds = bounds,
-                        initPoints = 3, #Must be more than number of input in scoring function --> TEST WHETHER HIGHER NR EPOCHS INCREASES ACCURACY
-                        iters.n = 2, #Number of Epochs, runs 2 times to find global optimum
+                        initPoints = 5, #Must be more than number of input in scoring function
+                        iters.n = 5, #Number of Epochs, runs 2 times to find global optimum
                         parallel = FALSE)
     
     # take the optimal parameters for xgboost()
-    print(getBestPars(opt_obj)[1])
+    #print(getBestPars(opt_obj)[1])
     params <- list(eta = getBestPars(opt_obj)[1])
     
-    # the numrounds which gives the max Score (rmse) --> CHANGE TO MIN??
+    # the numrounds which gives the max Score (rmse)
     #print(opt_obj$scoreSummary)
     numrounds <- opt_obj$scoreSummary$nrounds[
       which(opt_obj$scoreSummary$Score
-            == min(opt_obj$scoreSummary$Score))] #--> CHANGE TO MIN????
-    print(numrounds)
+            == min(opt_obj$scoreSummary$Score))] #Min?
+    #print(numrounds)
     
-    for (f in 116:n_forecast){
+    for (f in 1:n_forecast){
       # Boosted Trees
       #print(f)
-      train_x <- y_Z[(P_MAF+1):(315+f-1),2:ncol(y_Z)]
-      train_y <- y_Z[(P_MAF+1):(315+f-1),1]
-      test_x <- y_Z[315+f,2:ncol(y_Z)]
-      test_y <- y_Z[315+f,1]
+      train_x <- y_Z[1:(nrow(y_Z)-n_forecast+f-1),2:ncol(y_Z)]
+      train_y <- y_Z[1:(nrow(y_Z)-n_forecast+f-1),1]
+      test_x <- y_Z[nrow(y_Z)-n_forecast+f,2:ncol(y_Z)]
+      test_y <- y_Z[nrow(y_Z)-n_forecast+f,1]
       
       X_BT_tuned <- xgboost(params = params,
                             data = as.matrix(train_x),
                             label = as.matrix(train_y),
-                            nrounds = numrounds, #max number of rounds to tune trained model
-                            max.depth = 5, #Coulombe
-                            eval_metric = "rmse", #regression
-                            verbose = 0) #NIET output printen 
+                            nrounds = numrounds,
+                            max.depth = 5,
+                            eval_metric = "rmse",
+                            verbose = 0)
       
-      print(test_x)
-      print(test_y)
       xgb_test <- xgb.DMatrix(data = as.matrix(test_x), label = as.matrix(test_y))
       
       BT_y_forecast[f,i] = predict(X_BT_tuned, xgb_test)
@@ -198,26 +194,147 @@ Forecasting_function <- function(y, Z, n_forecast, horizons){
 }
 
 ## -- Forecasting Z -- 
+k <- 0
+time_1 <- Sys.time()
+
 BT_X_forecast <- Forecasting_function(Unempl, X, n_forecast, horizons)
+k <- k + 1
+time_2 <- Sys.time()
+cat("", sep="\n\n")
+cat("Running Time BT_X: ", time_2 - time_1)
+cat("Progress: ", 100*k/15)
+cat("Total Running Time: ", time_2 - time_1)
+cat("", sep="\n\n")
+
 BT_F_forecast <- Forecasting_function(Unempl, F, n_forecast, horizons)
+k <- k + 1
+time_3 <- Sys.time()
+cat("", sep="\n\n")
+cat("Running Time BT_F: ", time_3 - time_2)
+cat("Progress: ", 100*k/15)
+cat("Total Running Time: ", time_3 - time_1)
+cat("", sep="\n\n")
+
 BT_MAF_forecast <- Forecasting_function(Unempl, MAF, n_forecast, horizons)
+k <- k + 1
+time_4 <- Sys.time()
+cat("", sep="\n\n")
+cat("Running Time BT_MAF: ", time_4 - time_3)
+cat("Progress: ", 100*k/15)
+cat("Total Running Time: ", time_4 - time_1)
+cat("", sep="\n\n")
+
 BT_MARX_forecast <- Forecasting_function(Unempl, MARX, n_forecast, horizons)
+k <- k + 1
+time_5 <- Sys.time()
+cat("", sep="\n\n")
+cat("Running Time BT_MARX: ", time_5 - time_4)
+cat("Progress: ", 100*k/15)
+cat("Total Running Time: ", time_5 - time_1)
+cat("", sep="\n\n")
+
 BT_X_F_forecast <- Forecasting_function(Unempl, X_F, n_forecast, horizons)
+k <- k + 1
+time_6 <- Sys.time()
+cat("", sep="\n\n")
+cat("Running Time BT_X_F: ", time_6 - time_5)
+cat("Progress: ", 100*k/15)
+cat("Total Running Time: ", time_6 - time_1)
+cat("", sep="\n\n")
+
 BT_X_MAF_forecast <- Forecasting_function(Unempl, X_MAF, n_forecast, horizons)
+k <- k + 1
+time_7 <- Sys.time()
+cat("", sep="\n\n")
+cat("Running Time BT_X_MAF: ", time_7 - time_6)
+cat("Progress: ", 100*k/15)
+cat("Total Running Time: ", time_7 - time_1)
+cat("", sep="\n\n")
+
 BT_X_MARX_forecast <- Forecasting_function(Unempl, X_MARX, n_forecast, horizons)
+k <- k + 1
+time_8 <- Sys.time()
+cat("", sep="\n\n")
+cat("Running Time BT_X_MARX: ", time_8 - time_7)
+cat("Progress: ", 100*k/15)
+cat("Total Running Time: ", time_8 - time_1)
+cat("", sep="\n\n")
+
 BT_F_MAF_forecast <- Forecasting_function(Unempl, F_MAF, n_forecast, horizons)
+k <- k + 1
+time_9 <- Sys.time()
+cat("", sep="\n\n")
+cat("Running Time BT_F_MAF: ", time_9 - time_8)
+cat("Progress: ", 100*k/15)
+cat("Total Running Time: ", time_9 - time_1)
+cat("", sep="\n\n")
+
 BT_F_MARX_forecast <- Forecasting_function(Unempl, F_MARX, n_forecast, horizons)
+k <- k + 1
+time_10 <- Sys.time()
+cat("", sep="\n\n")
+cat("Running Time BT_F_MARX: ", time_10 - time_9)
+cat("Progress: ", 100*k/15)
+cat("Total Running Time: ", time_10 - time_1)
+cat("", sep="\n\n")
+
 BT_MAF_MARX_forecast <- Forecasting_function(Unempl, MAF_MARX, n_forecast, horizons)
+k <- k + 1
+time_11 <- Sys.time()
+cat("", sep="\n\n")
+cat("Running Time BT_MAF_MARX: ", time_11 - time_10)
+cat("Progress: ", 100*k/15)
+cat("Total Running Time: ", time_11 - time_1)
+cat("", sep="\n\n")
+
 BT_X_F_MAF_forecast <- Forecasting_function(Unempl, X_F_MAF, n_forecast, horizons)
+k <- k + 1
+time_12 <- Sys.time()
+cat("", sep="\n\n")
+cat("Running Time BT_X_F_MAF: ", time_12 - time_11)
+cat("Progress: ", 100*k/15)
+cat("Total Running Time: ", time_12 - time_1)
+cat("", sep="\n\n")
+
 BT_X_F_MARX_forecast <- Forecasting_function(Unempl, X_F_MARX, n_forecast, horizons)
+k <- k + 1
+time_13 <- Sys.time()
+cat("", sep="\n\n")
+cat("Running Time BT_X_F_MARX: ", time_13 - time_12)
+cat("Progress: ", 100*k/15)
+cat("Total Running Time: ", time_13 - time_1)
+cat("", sep="\n\n")
+
 BT_X_MAF_MARX_forecast <- Forecasting_function(Unempl, X_MAF_MARX, n_forecast, horizons)
+k <- k + 1
+time_14 <- Sys.time()
+cat("", sep="\n\n")
+cat("Running Time BT_X_MAF_MARX: ", time_14 - time_13)
+cat("Progress: ", 100*k/15)
+cat("Total Running Time: ", time_14 - time_1)
+cat("", sep="\n\n")
+
 BT_F_MAF_MARX_forecast <- Forecasting_function(Unempl, F_MAF_MARX, n_forecast, horizons)
+k <- k + 1
+time_15 <- Sys.time()
+cat("", sep="\n\n")
+cat("Running Time BT_F_MAF_MARX: ", time_15 - time_14)
+cat("Progress: ", 100*k/15)
+cat("Total Running Time: ", time_15 - time_1)
+cat("", sep="\n\n")
+
 BT_X_F_MAF_MARX_forecast <- Forecasting_function(Unempl, X_F_MAF_MARX, n_forecast, horizons)
+k <- k + 1
+time_16 <- Sys.time()
+cat("", sep="\n\n")
+cat("Running Time BT_X_F_MAF_MARX: ", time_16 - time_15)
+cat("Progress: ", 100*k/15)
+cat("Total Running Time: ", time_16 - time_1)
+cat("", sep="\n\n")
 
 ## -- RMSE Function --
 RMSE_BT <- data.frame(matrix(ncol = length(horizons), nrow = n_combinations))
 
-# ARE THE Y AND Y-REAL ALIGNED?
 RMSE_function <- function(actual, prediction){
   RMSE <- data.frame(matrix(ncol = length(horizons), nrow = 1))
   i <- 0
@@ -249,20 +366,20 @@ rownames(RMSE_BT) <- c("X", "F", "MAF", "MARX", "X,F", "X,MAF", "X,MARX", "F,MAF
 colnames(RMSE_BT) <- c("h=3", "h=6", "h=12", "h=18", "h=24")
 
 # Saving Prediction Tables
-write.csv(BT_X_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/CPB_BT_X_forecast.csv", row.names=FALSE)
-write.csv(BT_F_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/CPB_BT_F_forecast.csv", row.names=FALSE)
-write.csv(BT_MAF_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/CPB_BT_MAF_forecast.csv", row.names=FALSE)
-write.csv(BT_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/CPB_BT_MARX_forecast.csv", row.names=FALSE)
-write.csv(BT_X_F_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/CPB_BT_X_F_forecast.csv", row.names=FALSE)
-write.csv(BT_X_MAF_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/CPB_BT_X_MAF_forecast.csv", row.names=FALSE)
-write.csv(BT_X_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/CPB_BT_X_MARX_forecast.csv", row.names=FALSE)
-write.csv(BT_F_MAF_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/CPB_BT_F_MAF_forecast.csv", row.names=FALSE)
-write.csv(BT_F_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/CPB_BT_F_MARX_forecast.csv", row.names=FALSE)
-write.csv(BT_MAF_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/CPB_BT_MAF_MARX_forecast.csv", row.names=FALSE)
-write.csv(BT_X_F_MAF_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/CPB_BT_X_F_MAF_forecast.csv", row.names=FALSE)
-write.csv(BT_X_F_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/CPB_BT_X_F_MARX_forecast.csv", row.names=FALSE)
-write.csv(BT_X_MAF_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/CPB_BT_X_MAF_MARX_forecast.csv", row.names=FALSE)
-write.csv(BT_F_MAF_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/CPB_BT_F_MAF_MARX_forecast.csv", row.names=FALSE)
-write.csv(BT_X_F_MAF_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/CPB_BT_X_F_MAF_MARX_forecast.csv", row.names=FALSE)
+write.csv(BT_X_forecast, "/Users/vincentvanpul/Desktop/R_Output/CPB_BT_X_3_forecast.csv", row.names=FALSE)
+write.csv(BT_F_forecast, "/Users/vincentvanpul/Desktop/R_Output/CPB_BT_F_3_forecast.csv", row.names=FALSE)
+write.csv(BT_MAF_forecast, "/Users/vincentvanpul/Desktop/R_Output/CPB_BT_MAF_3_forecast.csv", row.names=FALSE)
+write.csv(BT_MARX_forecast, "/Users/vincentvanpul/Desktop/R_Output/CPB_BT_MARX_3_forecast.csv", row.names=FALSE)
+write.csv(BT_X_F_forecast, "/Users/vincentvanpul/Desktop/R_Output/CPB_BT_X_F_3_forecast.csv", row.names=FALSE)
+write.csv(BT_X_MAF_forecast, "/Users/vincentvanpul/Desktop/R_Output/CPB_BT_X_MAF_3_forecast.csv", row.names=FALSE)
+write.csv(BT_X_MARX_forecast, "/Users/vincentvanpul/Desktop/R_Output/CPB_BT_X_MARX_3_forecast.csv", row.names=FALSE)
+write.csv(BT_F_MAF_forecast, "/Users/vincentvanpul/Desktop/R_Output/CPB_BT_F_MAF_3_forecast.csv", row.names=FALSE)
+write.csv(BT_F_MARX_forecast, "/Users/vincentvanpul/Desktop/R_Output/CPB_BT_F_MARX_3_forecast.csv", row.names=FALSE)
+write.csv(BT_MAF_MARX_forecast, "/Users/vincentvanpul/Desktop/R_Output/CPB_BT_MAF_MARX_3_forecast.csv", row.names=FALSE)
+write.csv(BT_X_F_MAF_forecast, "/Users/vincentvanpul/Desktop/R_Output/CPB_BT_X_F_MAF_3_forecast.csv", row.names=FALSE)
+write.csv(BT_X_F_MARX_forecast, "/Users/vincentvanpul/Desktop/R_Output/CPB_BT_X_F_MARX_3_forecast.csv", row.names=FALSE)
+write.csv(BT_X_MAF_MARX_forecast, "/Users/vincentvanpul/Desktop/R_Output/CPB_BT_X_MAF_MARX_3_forecast.csv", row.names=FALSE)
+write.csv(BT_F_MAF_MARX_forecast, "/Users/vincentvanpul/Desktop/R_Output/CPB_BT_F_MAF_MARX_3_forecast.csv", row.names=FALSE)
+write.csv(BT_X_F_MAF_MARX_forecast, "/Users/vincentvanpul/Desktop/R_Output/CPB_BT_X_F_MAF_MARX_3_forecast.csv", row.names=FALSE)
 
-write.csv(RMSE_BT, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/CPB_RMSE_BT.csv", row.names=TRUE)
+write.csv(RMSE_BT, "/Users/vincentvanpul/Desktop/R_Output/CPB_RMSE_BT_3.csv", row.names=TRUE)
