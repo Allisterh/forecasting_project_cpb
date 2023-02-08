@@ -4,6 +4,19 @@ rm(list=ls())
 #Nikki:
 df <- read.csv("~/Documents/MSc Econometrics/Blok 3/Seminar/R code/data-eur2023.csv", row.names=1)
 
+# CPB PA RF Prediction data
+CPB_PA_RF_X_forecast <- read.csv("~/Documents/MSc Econometrics/Blok 3/Seminar/R code/CPB/RF/PA/CPB_PA_RF_X_forecast.csv")
+CPB_PA_RF_F_forecast <- read.csv("~/Documents/MSc Econometrics/Blok 3/Seminar/R code/CPB/RF/PA/CPB_PA_RF_F_forecast.csv")
+CPB_PA_RF_MAF_forecast <- read.csv("~/Documents/MSc Econometrics/Blok 3/Seminar/R code/CPB/RF/PA/CPB_PA_RF_MAF_forecast.csv")
+CPB_PA_RF_MARX_forecast <- read.csv("~/Documents/MSc Econometrics/Blok 3/Seminar/R code/CPB/RF/PA/CPB_PA_RF_MARX_forecast.csv")
+CPB_PA_RF_X_F_forecast <- read.csv("~/Documents/MSc Econometrics/Blok 3/Seminar/R code/CPB/RF/PA/CPB_PA_RF_X_F_forecast.csv")
+CPB_PA_RF_X_MAF_forecast <- read.csv("~/Documents/MSc Econometrics/Blok 3/Seminar/R code/CPB/RF/PA/CPB_PA_RF_X_MAF_forecast.csv")
+CPB_PA_RF_X_MARX_forecast <- read.csv("~/Documents/MSc Econometrics/Blok 3/Seminar/R code/CPB/RF/PA/CPB_PA_RF_X_MARX_forecast.csv")
+CPB_PA_RF_F_MAF_forecast <- read.csv("~/Documents/MSc Econometrics/Blok 3/Seminar/R code/CPB/RF/PA/CPB_PA_RF_F_MAF_forecast.csv")
+CPB_PA_RF_F_MARX_forecast <- read.csv("~/Documents/MSc Econometrics/Blok 3/Seminar/R code/CPB/RF/PA/CPB_PA_RF_F_MARX_forecast.csv")
+CPB_PA_RF_MAF_MARX_forecast <- read.csv("~/Documents/MSc Econometrics/Blok 3/Seminar/R code/CPB/RF/PA/CPB_PA_RF_MAF_MARX_forecast.csv")
+CPB_PA_RF_X_F_MAF_forecast <- read.csv("~/Documents/MSc Econometrics/Blok 3/Seminar/R code/CPB/RF/PA/CPB_PA_RF_X_F_MAF_forecast.csv")
+
 ### ---- FEATURE ENGINEERING ----
 library(vars)
 library(randomForest)
@@ -102,17 +115,17 @@ start_forecast <- 315
 end_forecast <- 434
 horizons <- list(3, 6, 12, 18, 24)
 Unempl <- df[,2]
-n_forecast <- 120 # CPB time window
+n_forecast <- end_forecast-start_forecast # CPB time window
 y_real <- Unempl[start_forecast:end_forecast]
 
 ntrees <- 200 #Accurate but slow
 
 Forecasting_function <- function(y, Z, n_forecast, horizons, ntrees){
-  RF_y_forecast <- data.frame(matrix(ncol = length(horizons), nrow = n_forecast))
-  for (f in 1:n_forecast){
+  #RF_y_forecast <- data.frame(matrix(ncol = length(horizons), nrow = n_forecast))
+  RF_y_forecast <- data.frame(matrix(ncol = length(horizons), nrow = 1))
+  for (f in 1:1){
     c <- 0
     nu <- Sys.time()
-    print(f)
     for (h in horizons){
       c <- c+1
       RF_iterated_forecast <- data.frame(matrix(ncol = 1, nrow = h))
@@ -139,17 +152,49 @@ Forecasting_function <- function(y, Z, n_forecast, horizons, ntrees){
 }
 
 ## -- Forecasting Z -- 
-PA_RF_X_forecast <- Forecasting_function(Unempl, X, n_forecast, horizons, ntrees) #70 min
-PA_RF_F_forecast <- Forecasting_function(Unempl, F, n_forecast, horizons, ntrees) #30 minutes
-PA_RF_MAF_forecast <- Forecasting_function(Unempl, MAF, n_forecast, horizons, ntrees) # minutes
-PA_RF_MARX_forecast <- Forecasting_function(Unempl, MARX, n_forecast, horizons, ntrees) # minutes
-PA_RF_X_F_forecast <- Forecasting_function(Unempl, X_F, n_forecast, horizons, ntrees) # minutes
-PA_RF_X_MAF_forecast <- Forecasting_function(Unempl, X_MAF, n_forecast, horizons, ntrees) # minutes
-PA_RF_X_MARX_forecast <- Forecasting_function(Unempl, X_MARX, n_forecast, horizons, ntrees) # hours
-PA_RF_F_MAF_forecast <- Forecasting_function(Unempl, F_MAF, n_forecast, horizons, ntrees) # minutes
-PA_RF_F_MARX_forecast <- Forecasting_function(Unempl, F_MARX, n_forecast, horizons, ntrees) # minutes
-PA_RF_MAF_MARX_forecast <- Forecasting_function(Unempl, MAF_MARX, n_forecast, horizons, ntrees) # minutes
-PA_RF_X_F_MAF_forecast <- Forecasting_function(Unempl, X_F_MAF, n_forecast, horizons, ntrees) # minutes
+nam <- function(M){
+  i<-0
+  for (h in horizons){
+    i<-i+1
+    colnames(M)[i]=paste('h=',h,sep='')
+  }
+  return(M)
+}
+CPB_PA_RF_X_forecast <- nam(CPB_PA_RF_X_forecast)
+CPB_PA_RF_F_forecast <- nam(CPB_PA_RF_F_forecast)
+CPB_PA_RF_MAF_forecast <- nam(CPB_PA_RF_MAF_forecast)
+CPB_PA_RF_MARX_forecast <- nam(CPB_PA_RF_MARX_forecast)
+CPB_PA_RF_X_F_forecast <- nam(CPB_PA_RF_X_F_forecast)
+CPB_PA_RF_X_MAF_forecast <- nam(CPB_PA_RF_X_MAF_forecast)
+CPB_PA_RF_X_MARX_forecast <- nam(CPB_PA_RF_X_MARX_forecast)
+CPB_PA_RF_F_MAF_forecast <- nam(CPB_PA_RF_F_MAF_forecast)
+CPB_PA_RF_F_MARX_forecast <- nam(CPB_PA_RF_F_MARX_forecast)
+CPB_PA_RF_MAF_MARX_forecast <- nam(CPB_PA_RF_MAF_MARX_forecast)
+CPB_PA_RF_X_F_MAF_forecast <- nam(CPB_PA_RF_X_F_MAF_forecast)
+
+PA_RF_X_forecast <- rbind(Forecasting_function(Unempl, X, n_forecast, horizons, ntrees), CPB_PA_RF_X_forecast)
+PA_RF_F_forecast <- rbind(Forecasting_function(Unempl, F, n_forecast, horizons, ntrees), CPB_PA_RF_F_forecast) #1 min
+PA_RF_MAF_forecast <- rbind(Forecasting_function(Unempl, MAF, n_forecast, horizons, ntrees), CPB_PA_RF_MAF_forecast) #5 minutes
+PA_RF_MARX_forecast <- rbind(Forecasting_function(Unempl, MARX, n_forecast, horizons, ntrees), CPB_PA_RF_MARX_forecast) # 5 minutes
+PA_RF_X_F_forecast <- rbind(Forecasting_function(Unempl, X_F, n_forecast, horizons, ntrees), CPB_PA_RF_X_F_forecast) # minutes
+PA_RF_X_MAF_forecast <- rbind(Forecasting_function(Unempl, X_MAF, n_forecast, horizons, ntrees), CPB_PA_RF_X_MAF_forecast) # minutes
+PA_RF_X_MARX_forecast <- rbind(Forecasting_function(Unempl, X_MARX, n_forecast, horizons, ntrees), CPB_PA_RF_X_MARX_forecast) # hours
+PA_RF_F_MAF_forecast <- rbind(Forecasting_function(Unempl, F_MAF, n_forecast, horizons, ntrees), CPB_PA_RF_F_MAF_forecast) # minutes
+PA_RF_F_MARX_forecast <- rbind(Forecasting_function(Unempl, F_MARX, n_forecast, horizons, ntrees), CPB_PA_RF_F_MARX_forecast) # minutes
+PA_RF_MAF_MARX_forecast <- rbind(Forecasting_function(Unempl, MAF_MARX, n_forecast, horizons, ntrees), CPB_PA_RF_MAF_MARX_forecast) # minutes
+PA_RF_X_F_MAF_forecast <- rbind(Forecasting_function(Unempl, X_F_MAF, n_forecast, horizons, ntrees), CPB_PA_RF_X_F_MAF_forecast) # minutes
+
+# PA_RF_X_forecast <- Forecasting_function(Unempl, X, n_forecast, horizons, ntrees) #70 min
+# PA_RF_F_forecast <- Forecasting_function(Unempl, F, n_forecast, horizons, ntrees) #30 minutes
+# PA_RF_MAF_forecast <- Forecasting_function(Unempl, MAF, n_forecast, horizons, ntrees) # minutes
+# PA_RF_MARX_forecast <- Forecasting_function(Unempl, MARX, n_forecast, horizons, ntrees) # minutes
+# PA_RF_X_F_forecast <- Forecasting_function(Unempl, X_F, n_forecast, horizons, ntrees) # minutes
+# PA_RF_X_MAF_forecast <- Forecasting_function(Unempl, X_MAF, n_forecast, horizons, ntrees) # minutes
+# PA_RF_X_MARX_forecast <- Forecasting_function(Unempl, X_MARX, n_forecast, horizons, ntrees) # hours
+# PA_RF_F_MAF_forecast <- Forecasting_function(Unempl, F_MAF, n_forecast, horizons, ntrees) # minutes
+# PA_RF_F_MARX_forecast <- Forecasting_function(Unempl, F_MARX, n_forecast, horizons, ntrees) # minutes
+# PA_RF_MAF_MARX_forecast <- Forecasting_function(Unempl, MAF_MARX, n_forecast, horizons, ntrees) # minutes
+# PA_RF_X_F_MAF_forecast <- Forecasting_function(Unempl, X_F_MAF, n_forecast, horizons, ntrees) # minutes
 PA_RF_X_F_MARX_forecast <- Forecasting_function(Unempl, X_F_MARX, n_forecast, horizons, ntrees) #
 PA_RF_X_MAF_MARX_forecast <- Forecasting_function(Unempl, X_MAF_MARX, n_forecast, horizons, ntrees) #
 PA_RF_F_MAF_MARX_forecast <- Forecasting_function(Unempl, F_MAF_MARX, n_forecast, horizons, ntrees) #
@@ -202,12 +247,11 @@ write.csv(PA_RF_X_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R 
 write.csv(PA_RF_F_MAF_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/CPB_PA_RF_F_MAF_forecast.csv", row.names=FALSE)
 write.csv(PA_RF_F_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/CPB_PA_RF_F_MARX_forecast.csv", row.names=FALSE)
 write.csv(PA_RF_MAF_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/CPB_PA_RF_MAF_MARX_forecast.csv", row.names=FALSE)
-write.csv(PA_RF_X_F_MAF_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/CPB_PA_RF_X_F_MAF_forecast2.csv", row.names=FALSE)
-write.csv(PA_RF_X_F_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/CPB_PA_RF_X_F_MARX_forecast2.csv", row.names=FALSE)
-write.csv(PA_RF_X_MAF_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/CPB_PA_RF_X_MAF_MARX_forecast2.csv", row.names=FALSE)
-write.csv(PA_RF_F_MAF_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/CPB_PA_RF_F_MAF_MARX_forecast2.csv", row.names=FALSE)
+write.csv(PA_RF_X_F_MAF_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/CPB_PA_RF_X_F_MAF_forecast.csv", row.names=FALSE)
+write.csv(PA_RF_X_F_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/CPB_PA_RF_X_F_MARX_forecast.csv", row.names=FALSE)
+write.csv(PA_RF_X_MAF_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/CPB_PA_RF_X_MAF_MARX_forecast.csv", row.names=FALSE)
+write.csv(PA_RF_F_MAF_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/CPB_PA_RF_F_MAF_MARX_forecast.csv", row.names=FALSE)
 write.csv(PA_RF_X_F_MAF_MARX_forecast, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/CPB_PA_RF_X_F_MAF_MARX_forecast.csv", row.names=FALSE)
 
 write.csv(PA_RMSE_RF, "C:/Users/Gebruiker/Documents/GitHub/project_cpb/Data en Forecasts/Output/CPB/PA_rmse_rf.csv", row.names=TRUE)
-write.csv(PA_RMSE_RF, "~/Documents/MSc Econometrics/Blok 3/Seminar/R code/PA_rmse_rf2.csv", row.names=FALSE)
 
