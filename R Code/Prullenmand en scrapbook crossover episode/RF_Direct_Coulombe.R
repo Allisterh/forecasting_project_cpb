@@ -6,14 +6,22 @@ library(randomForest)
 #df <- read.csv("~/Documents/MSc Econometrics/Blok 3/Seminar/R code/data122022.csv", row.names=1)
 
 # Dees:
-#df <- fredmd("D:/EUR/Master/Seminar Case studies in Applied Econometrics/R code/data122022.csv")
+df <- fredmd("D:/EUR/Master/Seminar Case studies in Applied Econometrics/R code/data122022.csv")
+row.names(df) <- df[,1]
+unemployment <- as.data.frame(df$UNRATE)
+unemployment <- as.data.frame(unemployment[3:765,])
+row.names(unemployment) <- row.names(df)[3:765]
+
+df_wo_unrate <- df[-c(1,25) ]
+df_wo_unrate <- df_wo_unrate[3:765,] # Delete first two rows because we transform and some do second differencign
+# Delete columns with NA values/that do not have data from 1960 onwards
+regressor_matrix <- df_wo_unrate[ , colSums(is.na(df_wo_unrate))==0]
+scaled_regressor_matrix <- as.data.frame(scale(regressor_matrix))
 
 ### ---- FEATURE ENGINEERING ----
 library(vars)
-new_df <- df[-c(1,2)]
 n_var <- ncol(new_df)
 T <- nrow(new_df)
-regressor_matrix <- new_df
 X_lags <- 12 
 n_Factors <- 3 
 F_lags <- 12 #Paper Coulombe (check FREDMD: Coulombe gebruikt er 12)
@@ -28,20 +36,16 @@ X_function <- function(regressor_matrix, X_lags){
 } 
 
 ## - F - 
-factors_t <- function(regressor_matrix, n_Factors, boolo) {
-  X_pca <- prcomp(regressor_matrix, center = boolo,scale. = boolo)
-  factors_t <- X_pca$x[1:n_Factors]
-  return(factors_t)
-}
-
-F_function <- function(regressor_matrix, n_Factors, F_lags, T, boolo){
-  F <- data.frame(matrix(ncol = n_Factors, nrow = T))
-  for (t in n_Factors:T){
-    F[t,1:n_Factors] <- factors_t(regressor_matrix[1:t,], n_Factors, boolo)
+F_function <- function(regressor_matrix, n_Factors, F_lags,boolo= FALSE){
+  F <- data.frame(matrix(ncol = n_Factors, nrow = nrow(regressor_matrix)))
+  for (t in n_Factors:nrow(regressor_matrix)){
+    newpca <- prcomp(regressor_matrix[1:t,], center = boolo,scale. = boolo)
+    F[t,1:n_Factors] <- newpca$x[1:n_Factors]
   }
-  F <- as.data.frame(shift(F, n=0:F_lags, type = 'lag', give.names=TRUE)) #shift function for lags of factors
+  #F <- as.data.frame(shift(F, n=0:F_lags, type = 'lag', give.names=TRUE)) #shift function for lags of factors
   return(F)
 }
+
 
 ## - MAF - 
 MAF_function <- function(X, X_lags, T, n_var, P_MAF, n_MAF, boolo) { #Use X (Feature matrix with lags) as input!
@@ -76,15 +80,15 @@ MARX_function <- function(regressor_matrix, P_MARX, n_var) {
 }
 
 ## -- Combinations of Z --
-X <- X_function(regressor_matrix, X_lags)
+X <- X_function(new_df, X_lags)
 
-scaled_regressor_matrix <- scale(regressor_matrix) #Scale Regressor Matrix for PCA in F
-F <- F_function(scaled_regressor_matrix, n_Factors, F_lags, T, FALSE)
+F <- F_function(scaled_regressor_matrix, n_Factors, F_lags)
+F <- as.data.frame(shift(F, n=0:12, type = 'lag', give.names=TRUE))
 
 scaled_X <- scale(X) # Scale Feature X for PCA in MAF
 MAF <- MAF_function(scaled_X, X_lags, T, n_var, P_MAF, n_MAF, FALSE)
 
-MARX <- MARX_function(regressor_matrix, P_MARX, n_var)
+MARX <- MARX_function(new_df, P_MARX, n_var)
 
 #for (i in 1:ncol(regressor_matrix)) {
 # print(paste(colnames(regressor_matrix)[i],var(regressor_matrix[,i]),sep = ' '))}
@@ -105,7 +109,7 @@ n_combinations <- 15
 
 ### ---- FORECASTING ----
 Unempl <- unemployment
-rownames(Unempl) <- as.data.frame(rownames(unemployment))
+rownames(Unempl) <- rownames(unemployment)
 horizons <- list(3, 6, 12, 18, 24)
 n_forecast <- 706-251 # Coulombe time window frame 1980M1 - 2017M12
 y_real <- unemployment[252:706,]
