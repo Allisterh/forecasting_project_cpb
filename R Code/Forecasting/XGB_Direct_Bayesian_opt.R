@@ -137,7 +137,7 @@ Forecasting_function <- function(y, Z, n_forecast, horizons){
         params = pars,
         data = dtrain,
         nfold = 5, #Coulombe
-        nrounds = 500, #Coulombe, max boosting rounds
+        nrounds = 100, #Coulombe, max boosting rounds
         prediction = TRUE,
         showsd = TRUE,
         early_stopping_rounds = 10,
@@ -145,15 +145,15 @@ Forecasting_function <- function(y, Z, n_forecast, horizons){
         stratified = FALSE) # Do we set this to TRUE or FALSE?
       
       return(list(
-        Score = min(xgbcv$evaluation_log$test_rmse_mean), #max --> min; we MINIMIZE RMSE right?
+        Score = min(xgbcv$evaluation_log$test_rmse_mean), 
         nrounds = xgbcv$best_iteration #iteration number with the best evaluation metric value
       )
       )
     }
     
     opt_obj <- bayesOpt(FUN = scoring_function, bounds = bounds,
-                        initPoints = 5, #Must be more than number of input in scoring function
-                        iters.n = 5, #Number of Epochs, runs 2 times to find global optimum
+                        initPoints = 3, #Must be more than number of input in scoring function
+                        iters.n = 2, #Number of Epochs, runs 2 times to find global optimum
                         parallel = FALSE)
     
     # take the optimal parameters for xgboost()
@@ -164,7 +164,7 @@ Forecasting_function <- function(y, Z, n_forecast, horizons){
     #print(opt_obj$scoreSummary)
     numrounds <- opt_obj$scoreSummary$nrounds[
       which(opt_obj$scoreSummary$Score
-            == min(opt_obj$scoreSummary$Score))] #Min?
+            == min(opt_obj$scoreSummary$Score))] 
     #print(numrounds)
     
     for (f in 1:n_forecast){
@@ -364,22 +364,21 @@ RMSE_BT[15,] <- RMSE_function(y_real, BT_X_F_MAF_MARX_forecast)
 
 rownames(RMSE_BT) <- c("X", "F", "MAF", "MARX", "X,F", "X,MAF", "X,MARX", "F,MAF", "F,MARX", "MAF,MARX", "X,F,MAF", "X,F,MARX", "X,MAF,MARX", "F,MAF,MARX", "X,F,MAF,MARX")
 colnames(RMSE_BT) <- c("h=3", "h=6", "h=12", "h=18", "h=24")
-
 # Saving Prediction Tables
-write.csv(BT_X_forecast, "/Users/vincentvanpul/Desktop/R_Output/CPB_BT_X_3_forecast.csv", row.names=FALSE)
-write.csv(BT_F_forecast, "/Users/vincentvanpul/Desktop/R_Output/CPB_BT_F_3_forecast.csv", row.names=FALSE)
-write.csv(BT_MAF_forecast, "/Users/vincentvanpul/Desktop/R_Output/CPB_BT_MAF_3_forecast.csv", row.names=FALSE)
-write.csv(BT_MARX_forecast, "/Users/vincentvanpul/Desktop/R_Output/CPB_BT_MARX_3_forecast.csv", row.names=FALSE)
-write.csv(BT_X_F_forecast, "/Users/vincentvanpul/Desktop/R_Output/CPB_BT_X_F_3_forecast.csv", row.names=FALSE)
-write.csv(BT_X_MAF_forecast, "/Users/vincentvanpul/Desktop/R_Output/CPB_BT_X_MAF_3_forecast.csv", row.names=FALSE)
-write.csv(BT_X_MARX_forecast, "/Users/vincentvanpul/Desktop/R_Output/CPB_BT_X_MARX_3_forecast.csv", row.names=FALSE)
-write.csv(BT_F_MAF_forecast, "/Users/vincentvanpul/Desktop/R_Output/CPB_BT_F_MAF_3_forecast.csv", row.names=FALSE)
-write.csv(BT_F_MARX_forecast, "/Users/vincentvanpul/Desktop/R_Output/CPB_BT_F_MARX_3_forecast.csv", row.names=FALSE)
-write.csv(BT_MAF_MARX_forecast, "/Users/vincentvanpul/Desktop/R_Output/CPB_BT_MAF_MARX_3_forecast.csv", row.names=FALSE)
-write.csv(BT_X_F_MAF_forecast, "/Users/vincentvanpul/Desktop/R_Output/CPB_BT_X_F_MAF_3_forecast.csv", row.names=FALSE)
-write.csv(BT_X_F_MARX_forecast, "/Users/vincentvanpul/Desktop/R_Output/CPB_BT_X_F_MARX_3_forecast.csv", row.names=FALSE)
-write.csv(BT_X_MAF_MARX_forecast, "/Users/vincentvanpul/Desktop/R_Output/CPB_BT_X_MAF_MARX_3_forecast.csv", row.names=FALSE)
-write.csv(BT_F_MAF_MARX_forecast, "/Users/vincentvanpul/Desktop/R_Output/CPB_BT_F_MAF_MARX_3_forecast.csv", row.names=FALSE)
-write.csv(BT_X_F_MAF_MARX_forecast, "/Users/vincentvanpul/Desktop/R_Output/CPB_BT_X_F_MAF_MARX_3_forecast.csv", row.names=FALSE)
+write.csv(BT_X_forecast, "/Users/vincentvanpul/Desktop/R_Output/CPB_BT_X_forecast.csv", row.names=FALSE)
+write.csv(BT_F_forecast, "/Users/vincentvanpul/Desktop/R_Output/CPB_BT_F_forecast.csv", row.names=FALSE)
+write.csv(BT_MAF_forecast, "/Users/vincentvanpul/Desktop/R_Output/CPB_BT_MAF_forecast.csv", row.names=FALSE)
+write.csv(BT_MARX_forecast, "/Users/vincentvanpul/Desktop/R_Output/CPB_BT_MARX_forecast.csv", row.names=FALSE)
+write.csv(BT_X_F_forecast, "/Users/vincentvanpul/Desktop/R_Output/CPB_BT_X_F_forecast.csv", row.names=FALSE)
+write.csv(BT_X_MAF_forecast, "/Users/vincentvanpul/Desktop/R_Output/CPB_BT_X_MAF_forecast.csv", row.names=FALSE)
+write.csv(BT_X_MARX_forecast, "/Users/vincentvanpul/Desktop/R_Output/CPB_BT_X_MARX_forecast.csv", row.names=FALSE)
+write.csv(BT_F_MAF_forecast, "/Users/vincentvanpul/Desktop/R_Output/CPB_BT_F_MAF_forecast.csv", row.names=FALSE)
+write.csv(BT_F_MARX_forecast, "/Users/vincentvanpul/Desktop/R_Output/CPB_BT_F_MARX_forecast.csv", row.names=FALSE)
+write.csv(BT_MAF_MARX_forecast, "/Users/vincentvanpul/Desktop/R_Output/CPB_BT_MAF_MARX_forecast.csv", row.names=FALSE)
+write.csv(BT_X_F_MAF_forecast, "/Users/vincentvanpul/Desktop/R_Output/CPB_BT_X_F_MAF_forecast.csv", row.names=FALSE)
+write.csv(BT_X_F_MARX_forecast, "/Users/vincentvanpul/Desktop/R_Output/CPB_BT_X_F_MARX_forecast.csv", row.names=FALSE)
+write.csv(BT_X_MAF_MARX_forecast, "/Users/vincentvanpul/Desktop/R_Output/CPB_BT_X_MAF_MARX_forecast.csv", row.names=FALSE)
+write.csv(BT_F_MAF_MARX_forecast, "/Users/vincentvanpul/Desktop/R_Output/CPB_BT_F_MAF_MARX_forecast.csv", row.names=FALSE)
+write.csv(BT_X_F_MAF_MARX_forecast, "/Users/vincentvanpul/Desktop/R_Output/CPB_BT_X_F_MAF_MARX_forecast.csv", row.names=FALSE)
 
-write.csv(RMSE_BT, "/Users/vincentvanpul/Desktop/R_Output/CPB_RMSE_BT_3.csv", row.names=TRUE)
+write.csv(RMSE_BT, "/Users/vincentvanpul/Desktop/R_Output/CPB_RMSE_BT.csv", row.names=TRUE)
