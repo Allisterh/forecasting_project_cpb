@@ -1,6 +1,8 @@
 #Clearing Environment
 rm(list=ls())
 
+df <- read.csv("data-eur2023.csv", row.names = 1)
+
 #Vincent: 
 #df <- read.csv("/Users/vincentvanpul/Desktop/data-eur2023.csv", row.names=1)
 
@@ -17,6 +19,7 @@ colstodiff <- c(1, 2, 3, 6, 7, 8)
 
 # take the first difference of the selected columns
 diff_data <- diff(as.matrix(tobedifferenced_matrix[, colstodiff]), differences = 1)
+diff_data <- data.frame(cbind(diff_data, df$L1_BSCI[2:434], df$L1_CSCICP02[2:434], df$L1_AEX[2:434]))
 
 regressor_matrix_diff <- diff_data[-c(1)]
 # MAYBE WE NEED TO OPTIMIZE THE LAGS / FACTORS AGAIN 
