@@ -10,33 +10,42 @@ df <- read.csv("C:/Users/sophi_j0d2ugq/OneDrive/Documents/Data Seminar/data-eur2
 ### ---- FEATURE ENGINEERING ----
 library(vars)
 library(randomForest)
-regressor_matrix <- df[-c(1,2)] #Remove pubdate and dependent variable
-n_var <- ncol(regressor_matrix)
-T <- nrow(regressor_matrix)
-X_lags <- 6 #average 4 and 7 (AR)
-n_Factors <- 2 #Optimization
-F_lags <- 6 #Average of 4 and 7 (AR)
+library(urca)
+
+tobedifferenced_matrix <- df[-c(1)] # Remove pubdate 
+colstodiff <- c(1, 2, 3, 6, 7, 8)
+
+# take the first difference of the selected columns
+diff_data <- diff(as.matrix(tobedifferenced_matrix[, colstodiff]), differences = 1)
+
+regressor_matrix_diff <- diff_data[-c(1)]
+# MAYBE WE NEED TO OPTIMIZE THE LAGS / FACTORS AGAIN 
+n_var <- ncol(regressor_matrix_diff)
+T <- nrow(regressor_matrix_diff)
+X_lags <- 6 #average 4 and 7 (AR) (THIS, IS BULLSHIT)
+n_Factors <- 2 #Optimization (WE STILL HAVE TO DO THIS FOR THE DIFFERENCED VARIABLES)
+F_lags <- 6 #Average of 4 and 7 (AR) (THIS IS BULLSHIT)
 P_MAF <- 6 #Average of 4 and 7 (AR)
 n_MAF <- 6 #Optimization
 P_MARX <- 6 #Average of 4 and 7 (AR)
 
 ## - X - 
 library(data.table)
-X_function <- function(regressor_matrix, X_lags){
-  return(as.data.frame(shift(regressor_matrix,n=0:X_lags, type = 'lag', give.names=TRUE)))
+X_function <- function(regressor_matrix_diff, X_lags){
+  return(as.data.frame(shift(regressor_matrix_diff,n=0:X_lags, type = 'lag', give.names=TRUE)))
 } 
 
 ## - F - 
-factors_t <- function(regressor_matrix, n_Factors, boolo) {
-  X_pca <- prcomp(regressor_matrix, center = boolo,scale. = boolo)
+factors_t <- function(regressor_matrix_diff, n_Factors, boolo) {
+  X_pca <- prcomp(regressor_matrix_diff, center = boolo,scale. = boolo)
   factors_t <- X_pca$x[1:n_Factors]
   return(factors_t)
 }
 
-F_function <- function(regressor_matrix, n_Factors, F_lags, T, boolo){
+F_function <- function(regressor_matrix_diff, n_Factors, F_lags, T, boolo){
   F <- data.frame(matrix(ncol = n_Factors, nrow = T))
   for (t in n_Factors:T){
-    F[t,1:n_Factors] <- factors_t(regressor_matrix[1:t,], n_Factors, boolo)
+    F[t,1:n_Factors] <- factors_t(regressor_matrix_diff[1:t,], n_Factors, boolo)
   }
   F <- as.data.frame(shift(F, n=0:F_lags, type = 'lag', give.names=TRUE)) #shift function for lags of factors
   return(F)
@@ -75,15 +84,15 @@ MARX_function <- function(X, P_MARX, n_var) {
 }
 
 ## -- Combinations of Z --
-X <- X_function(regressor_matrix, X_lags)
+X <- X_function(regressor_matrix_diff, X_lags)
 
-scaled_regressor_matrix <- scale(regressor_matrix) #Scale Regressor Matrix for PCA in F
-F <- F_function(scaled_regressor_matrix, n_Factors, F_lags, T, FALSE)
+scaled_regressor_matrix_diff <- scale(regressor_matrix_diff) #Scale Regressor Matrix for PCA in F
+F <- F_function(scaled_regressor_matrix_diff, n_Factors, F_lags, T, FALSE)
 
 scaled_X <- scale(X) # Scale Feature X for PCA in MAF
 MAF <- MAF_function(scaled_X, X_lags, T, n_var, P_MAF, n_MAF, FALSE)
 
-MARX <- MARX_function(regressor_matrix, P_MARX, n_var)
+MARX <- MARX_function(regressor_matrix_diff, P_MARX, n_var)
 
 X_F <- cbind(X, F)
 X_MAF <- cbind(X, MAF)
@@ -101,13 +110,14 @@ n_combinations <- 15
 
 ### ---- FORECASTING ----
 # -- Forecasting Function -- 
-library(ParBayesianOptimization)
 library(xgboost)
 
 horizons <- list(3, 6, 12, 18, 24)
-Unempl <- df[,2]
+#Unempl <- df[,2]
+Unempl <- diff_data[,1]
 n_forecast <- 120 # CPB time window
-y_real <- Unempl[315:434]
+#y_real <- Unempl[315:434] #MAYBE NEEDS TO BE CHANGED TO ACCOUNT FOR THE DIFFERENCES 
+y_real <- Unempl[314:433]
 ntrees <- 200 #Accurate but slow
 
 Forecasting_function <- function(y, Z, n_forecast, horizons){
@@ -129,47 +139,7 @@ Forecasting_function <- function(y, Z, n_forecast, horizons){
     
     #Optimization
     set.seed(2021)
-    bounds <- list(eta = c(0, 1))
-    
-    scoring_function <- function(eta) {
-      library(xgboost)
-      dtrain <- xgb.DMatrix(as.matrix(train_x), label = as.matrix(train_y), missing = NA)
-      
-      pars <- list(eta = 0.3) #default, to be tuned
-      
-      xgbcv <- xgb.cv(
-        params = pars,
-        data = dtrain,
-        nfold = 5, #Coulombe
-        nrounds = 100, #Coulombe, max boosting rounds
-        prediction = TRUE,
-        showsd = TRUE,
-        early_stopping_rounds = 10,
-        maximize = FALSE, #TRUE --> FALSE : RMSE is error, so we minimize right?
-        stratified = FALSE) # Do we set this to TRUE or FALSE?
-      
-      return(list(
-        Score = min(xgbcv$evaluation_log$test_rmse_mean), 
-        nrounds = xgbcv$best_iteration #iteration number with the best evaluation metric value
-      )
-      )
-    }
-    
-    opt_obj <- bayesOpt(FUN = scoring_function, bounds = bounds,
-                        initPoints = 3, #Must be more than number of input in scoring function
-                        iters.n = 2, #Number of Epochs, runs 2 times to find global optimum
-                        parallel = FALSE)
-    
-    # take the optimal parameters for xgboost()
-    #print(getBestPars(opt_obj)[1])
-    params <- list(eta = getBestPars(opt_obj)[1])
-    
-    # the numrounds which gives the max Score (rmse)
-    #print(opt_obj$scoreSummary)
-    numrounds <- opt_obj$scoreSummary$nrounds[
-      which(opt_obj$scoreSummary$Score
-            == min(opt_obj$scoreSummary$Score))] 
-    #print(numrounds)
+
     
     for (f in 1:n_forecast){
       # Boosted Trees
@@ -179,17 +149,49 @@ Forecasting_function <- function(y, Z, n_forecast, horizons){
       test_x <- y_Z[nrow(y_Z)-n_forecast+f,2:ncol(y_Z)]
       test_y <- y_Z[nrow(y_Z)-n_forecast+f,1]
       
-      X_BT_tuned <- xgboost(params = params,
+      if(f==1 || f%%24==0){
+        
+        # Set up parameter grid
+        params <- expand.grid(
+          nrounds = c(50, 100, 200, 500), #Need sources to back up these numbers
+          eta = c(0.01, 0.1, 0.3) # Need sources to back up these numbers
+        )
+        
+        # Define CV method
+        ctrl <- trainControl(
+          method = "repeatedcv",
+          number = 5,
+          repeats = 3,
+          verboseIter = FALSE,
+          returnResamp = "all"
+        )
+        
+        # Train and tune the XGBoost model using grid search
+        xgb <- xgb.train(
+          data = train_x,
+          label = train_y,
+          method = "xgbTree",
+          trControl = ctrl,
+          tuneGrid = params,
+          verbose = FALSE
+        )
+        
+        # Use the best parameters to train the final model on the full training set
+        optimizednrounds = xgb$bestTune$nrounds
+        optimizedeta = xgb$bestTune$eta
+      }
+      
+      X_BT_tuned <- xgboost(eta = optimizedeta,
                             data = as.matrix(train_x),
                             label = as.matrix(train_y),
-                            nrounds = numrounds,
-                            max.depth = 5,
+                            nrounds = optimizednrounds,
+                            max.depth = 5, # Dit is misschien wel laag voor XGB? 
                             eval_metric = "rmse",
                             verbose = 0)
       
       xgb_test <- xgb.DMatrix(data = as.matrix(test_x), label = as.matrix(test_y))
       
-      BT_y_forecast[f,i] = predict(X_BT_tuned, xgb_test)
+      BT_y_forecast[f,i] = predict(X_BT_tuned, xgb_test) # add the first difference at the end, only to the dependent variable 
       
     }
     colnames(BT_y_forecast)[i]=paste('h=',h,sep='')
@@ -350,6 +352,29 @@ RMSE_function <- function(actual, prediction){
   return(RMSE)
 }
 
+# -- DB Function -- 
+library(forecast)
+DB_BT <- data.frame(matrix(ncol = length(horizons), nrow = n_combinations))
+numberofhorizons <- c(3,6,12,18,24)
+
+for(i in 1:5){
+DB_BT[1,i] <- dm.test((y_real - BT_X_forecast), (y_real - BT_X_forecast), h = numberofhorizons[i]) # Only there for completeness, but this value is redundant
+DB_BT[2,i] <- dm.test((y_real - BT_F_forecast), (y_real - BT_X_forecast), h = numberofhorizons[i])
+DB_BT[3,i] <- dm.test((y_real - BT_MAF_forecast), (y_real - BT_X_forecast), h = numberofhorizons[i])
+DB_BT[4,i] <- dm.test((y_real - BT_MARX_forecast), (y_real - BT_X_forecast), h = numberofhorizons[i])
+DB_BT[5,i] <- dm.test((y_real - BT_X_F_forecast), (y_real - BT_X_forecast), h = numberofhorizons[i])
+DB_BT[6,i] <- dm.test((y_real - BT_X_MAF_forecast), (y_real - BT_X_forecast), h = numberofhorizons[i])
+DB_BT[7,i] <- dm.test((y_real - BT_X_MARX_forecast), (y_real - BT_X_forecast), h = numberofhorizons[i])
+DB_BT[8,i] <- dm.test((y_real - BT_F_MAF_forecast), (y_real - BT_X_forecast), h = numberofhorizons[i])
+DB_BT[9,i] <- dm.test((y_real - BT_F_MARX_forecast), (y_real - BT_X_forecast), h = numberofhorizons[i])
+DB_BT[10,i] <- dm.test((y_real - BT_MAF_MARX_forecast), (y_real - BT_X_forecast), h = numberofhorizons[i])
+DB_BT[11,i] <- dm.test((y_real - BT_X_F_MAF_forecast), (y_real - BT_X_forecast), h = numberofhorizons[i])
+DB_BT[12,i] <- dm.test((y_real - BT_X_F_MARX_forecast), (y_real - BT_X_forecast), h = numberofhorizons[i])
+DB_BT[13,i] <- dm.test((y_real - BT_X_MAF_MARX_forecast), (y_real - BT_X_forecast), h = numberofhorizons[i])
+DB_BT[14,i] <- dm.test((y_real - BT_F_MAF_MARX_forecast), (y_real - BT_X_forecast), h = numberofhorizons[i])
+DB_BT[15,i] <- dm.test((y_real - BT_X_F_MAF_MARX_forecast), (y_real - BT_X_forecast), h = numberofhorizons[i])
+}
+
 RMSE_BT[1,] <- RMSE_function(y_real, BT_X_forecast)
 RMSE_BT[2,] <- RMSE_function(y_real, BT_F_forecast)
 RMSE_BT[3,] <- RMSE_function(y_real, BT_MAF_forecast)
@@ -368,6 +393,11 @@ RMSE_BT[15,] <- RMSE_function(y_real, BT_X_F_MAF_MARX_forecast)
 
 rownames(RMSE_BT) <- c("X", "F", "MAF", "MARX", "X,F", "X,MAF", "X,MARX", "F,MAF", "F,MARX", "MAF,MARX", "X,F,MAF", "X,F,MARX", "X,MAF,MARX", "F,MAF,MARX", "X,F,MAF,MARX")
 colnames(RMSE_BT) <- c("h=3", "h=6", "h=12", "h=18", "h=24")
+
+#Saving row and column names for Diebold Mariano
+rownames(DB_BT) <- c("X", "F", "MAF", "MARX", "X,F", "X,MAF", "X,MARX", "F,MAF", "F,MARX", "MAF,MARX", "X,F,MAF", "X,F,MARX", "X,MAF,MARX", "F,MAF,MARX", "X,F,MAF,MARX")
+colnames(DB_BT) <- c("h=3", "h=6", "h=12", "h=18", "h=24")
+
 # Saving Prediction Tables
 write.csv(BT_X_forecast, "/Users/vincentvanpul/Desktop/R_Output/CPB_BT_X_forecast.csv", row.names=FALSE)
 write.csv(BT_F_forecast, "/Users/vincentvanpul/Desktop/R_Output/CPB_BT_F_forecast.csv", row.names=FALSE)
@@ -386,3 +416,4 @@ write.csv(BT_F_MAF_MARX_forecast, "/Users/vincentvanpul/Desktop/R_Output/CPB_BT_
 write.csv(BT_X_F_MAF_MARX_forecast, "/Users/vincentvanpul/Desktop/R_Output/CPB_BT_X_F_MAF_MARX_forecast.csv", row.names=FALSE)
 
 write.csv(RMSE_BT, "/Users/vincentvanpul/Desktop/R_Output/CPB_RMSE_BT.csv", row.names=TRUE)
+write.csv(RMSE_BT, "/Users/vincentvanpul/Desktop/R_Output/CPB_DB_BT.csv", row.names=TRUE)
