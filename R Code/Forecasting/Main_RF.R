@@ -24,14 +24,17 @@ inflation <- read.csv("Extra data/inflation.csv", sep = ';')
 inflation <- inflation[278:711,3]
 
 df <- cbind(df,inflation)
+rm(inflation)
+
+## ---- Additional Data ----
 
 # Faillisementen
 faillisementen <- read.csv("Extra data/faillisementen.csv", sep = ';')
-faillisementen <- faillisementen[62:495,4]
+faillisementen <- faillisementen[111:495,4]
 
 # Cost of building, starts at 1990
 buildingcost <- read.csv("Extra data/bouwkosten.csv", sep = ';')
-buildingcost <- buildingcost[,-c(1,3,4,5,6,8)]
+buildingcost <- buildingcost[3:387,-c(1,3,4,5,6,8)]
 
 # Building permits
 buildpermits1 <- read.csv("Extra data/Bouwvergunning19902016.csv", sep = ';')
@@ -42,7 +45,7 @@ buildpermits2 <- read.csv("Extra data/Bouwvergunning20122022.csv", sep = ';')
 buildpermits2 <- buildpermits2[,c(4,6)] # same 1:60
 colnames(buildpermits2)[2] = c("BouwVerg")
 
-buildpermits<- rbind(buildpermits1[3:324,1:2],buildpermits2[61:123,]) # Starts at 1990
+buildpermits<- append(buildpermits1[3:324,2],buildpermits2[61:123,2]) # Starts at 1990
 rm(buildpermits1,buildpermits2)
 
 #checkbuild <- cbind(buildpermits1[265:324,1:2], buildpermits2[1:60,2])
@@ -53,10 +56,6 @@ rm(buildpermits1,buildpermits2)
  # geom_line(aes(y=BouwVerg2), colour = 'blue')+
   #theme_classic()
 
-adf.test(buildpermits[,2])
-
-diff_data <- as.data.frame(diff(as.matrix(buildpermits[,2]), differences = 1))
-
 ggplot(diff_data, aes(x=1:59))+
   geom_line(aes(y=BouwVerg), colour = 'red')+
   geom_line(aes(y=BouwVerg2), colour = 'blue')+
@@ -64,6 +63,7 @@ ggplot(diff_data, aes(x=1:59))+
 
 # -- Full data set consumer confidence -- 
 consconf <- read.csv("Extra data/consconf.csv", sep = ';')
+consconf <- consconf[48:432,3:10]
 
 # -- Additional data of stocks -- We need to check alignment of the data
 
@@ -101,26 +101,28 @@ rm(ftse100,spindex,dax,cac40,ftse,sp500)
 
 # ECB financial stress index, European Central Bank
 fin_stress <- read.csv("Extra data/fin_stress.csv")
-fin_stress <- rev(fin_stress[9:442,2])
+fin_stress <- rev(fin_stress[9:393,2])
 
 # -- Commodity prices (Gas, Oil, Gold) -- World Bank
 commodities <- read.csv("Extra data/commodities2.csv", sep = ';')
-commodities <- commodities[363:747,]
+commodities <- commodities[363:747,2:4]
 
 # Interest rates, source OECD
 interestshort <- read.csv("Extra data/interestratesshort.csv", sep = ',')
 interestshort <- dplyr::filter(interestshort, LOCATION %in% c("NLD"))
-interestshort <- interestshort[6:439,6:7]
+interestshort <- interestshort[55:439,6:7]
 interestlong <- read.csv("Extra data/interestrateslong.csv", sep = ',')
 interestlong <- dplyr::filter(interestlong, LOCATION %in% c("NLD"))
-interestlong <- interestlong[1:434,6:7]
-interest <- cbind(interestshort, interestlong[,2])
-colnames(interest)[2:3] <- c("Short_int", "Long_int")
+interestlong <- interestlong[50:434,6:7]
+interest <- cbind(interestshort[,2], interestlong[,2])
+colnames(interest) <- c("Short_interest","Long_interest")
 
 rm(interestshort,interestlong)
 
 # Combine data
-df_full <- cbind(df,inflation, faillisementen,fin_stress,commodities[,2:4], )
+additional_data <- cbind(buildingcost,buildpermits,faillisementen,consconf,logstocks[,2:5],fin_stress,commodities,interest)
+df_full <- cbind(df[50:434,],additional_data)
+write.csv(df_full, "Extra data/fulldata.csv", row.names=FALSE)
 
 # -- transformations -- 
 
