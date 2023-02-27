@@ -61,10 +61,6 @@ ggplot(diff_data, aes(x=1:59))+
   geom_line(aes(y=BouwVerg2), colour = 'blue')+
   theme_classic()
 
-# -- Full data set consumer confidence -- 
-consconf <- read.csv("Extra data/consconf.csv", sep = ';')
-consconf <- consconf[48:432,3:10]
-
 # -- Additional data of stocks -- We need to check alignment of the data
 
 # German stocks, begint vanaf 1988
@@ -102,10 +98,11 @@ rm(ftse100,spindex,dax,cac40,ftse,sp500)
 # ECB financial stress index, European Central Bank
 fin_stress <- read.csv("Extra data/fin_stress.csv")
 fin_stress <- rev(fin_stress[9:393,2])
+plot(x=1:385,y=fin_stress, type = 'l')
 
 # -- Commodity prices (Gas, Oil, Gold) -- World Bank
 commodities <- read.csv("Extra data/commodities2.csv", sep = ';')
-commodities <- commodities[363:747,2:4]
+commodities <- as.numeric(commodities[363:747,2:4])
 
 # Interest rates, source OECD
 interestshort <- read.csv("Extra data/interestratesshort.csv", sep = ',')
