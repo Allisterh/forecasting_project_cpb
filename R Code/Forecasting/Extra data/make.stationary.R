@@ -33,4 +33,15 @@ make.stationary <- function(df){
   return(df_2)
 }
 
+for (i in 1:ncol(df)) {
+  print(colnames(df[,i]))
+  if (adf.test(df[,i])$p.value > 0.05){
+    print("non-stationary")
+  }
+  else {
+    print("stationary")
+  }
+}
+
+
 stationary.data <- make.stationary(df)
