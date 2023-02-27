@@ -24,6 +24,18 @@ make.stationary <- function(df){
   return(df_2)
 }
 
+check.stationary <- function(df){
+  for (i in 1:ncol(df)) {
+    print(colnames(df[,i]))
+    if (adf.test(df[,i])$p.value > 0.05){
+      print("non-stationary")
+    }
+    else {
+      print("stationary")
+    }
+  }
+}
+
 ## -- Feature Engineering --
 
 ## - F - Feature matrix of Factors and their lags
