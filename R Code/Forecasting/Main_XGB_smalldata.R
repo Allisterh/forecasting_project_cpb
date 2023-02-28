@@ -67,9 +67,8 @@ X_F_MAF_MARX <- cbind(X, F, MAF, MARX)
 
 # -- Forecast Initialization --
 poos <- 120
-# Must predict Delta_Y --> We have as input y_differenced in Forecasting function
 Unempl <- df_cpb[,2] # (X_lags+1)
-y_real <- Unempl[(length(Unempl)-poos+1):length(Unempl)] # prediction must start at Y_316. test set is therefore Z_316-h (f=1)
+y_real <- y_differenced[(length(y_differenced)-poos+1):length(y_differenced)]
 start_forecast <- length(Unempl)-poos+1
 end_forecast <- length(Unempl)
 horizons <- list(3, 6, 12, 18, 24) #
@@ -131,14 +130,7 @@ Forecasting_function_XGB <- function(y, Z, n_forecast, horizons){
       }
       
       testyx <- cbind(test_y, test_x)
-      
-      #add the first difference at the end, only to the dependent variable 
-      #Forecasting value = Y_t-h + Delta_Y
-      #print(y_real[f])
-      predicted_DeltaY <- predict(XGB_tuned, testyx)
-      #print(predicted_DeltaY)
-      XGB_y_forecast[f,i] = y_real[f] + predicted_DeltaY
-      #print(XGB_y_forecast[f,i])
+      XGB_y_forecast[f,i] <- predict(XGB_tuned, testyx)
     }
     colnames(XGB_y_forecast)[i]=paste('h=',h,sep='')
   }
