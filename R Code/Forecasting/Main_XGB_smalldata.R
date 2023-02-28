@@ -142,6 +142,7 @@ RMSE_function <- function(actual, prediction){
   return(RMSE)
 }
 
+# Predictions and RMSE's
 XGB_X_forecast <- Forecasting_function_XGB(y_differenced, X, poos, horizons) 
 RMSE_XGB_X_forecast <- RMSE_function(y_real,XGB_X_forecast)
 
@@ -187,3 +188,27 @@ RMSE_XGB_F_MAF_MARX_forecast <- RMSE_function(y_real,XGB_F_MAF_MARX_forecast)
 XGB_X_F_MAF_MARX_forecast <- Forecasting_function_XGB(y_differenced, X_F_MAF_MARX, poos, horizons) 
 RMSE_XGB_X_F_MAF_MARX_forecast <- RMSE_function(y_real,XGB_X_F_MAF_MARX_forecast)
 
+# Write csv files 
+write.csv(XGB_X_forecast, "XGB_Predictions_small/XGB_X_forecast_small.csv", row.names=FALSE)
+write.csv(XGB_F_forecast, "XGB_Predictions_small/XGB_F_forecast_small.csv", row.names=FALSE)
+write.csv(XGB_MAF_forecast, "XGB_Predictions_small/XGB_MAF_forecast_small.csv", row.names=FALSE)
+write.csv(XGB_MARX_forecast, "XGB_Predictions_small/XGB_MARX_forecast_small.csv", row.names=FALSE)
+write.csv(XGB_X_F_forecast, "XGB_Predictions_small/XGB_X_F_forecast_small.csv", row.names=FALSE)
+write.csv(XGB_X_MAF_forecast, "XGB_Predictions_small/XGB_X_MAF_forecast_small.csv", row.names=FALSE)
+write.csv(XGB_X_MARX_forecast, "XGB_Predictions_small/XGB_X_MARX_forecast_small.csv", row.names=FALSE)
+write.csv(XGB_F_MAF_forecast, "XGB_Predictions_small/XGB_F_MAF_forecast_small.csv", row.names=FALSE)
+write.csv(XGB_F_MARX_forecast, "XGB_Predictions_small/XGB_F_MARX_forecast_small.csv", row.names=FALSE)
+write.csv(XGB_MAF_MARX_forecast, "XGB_Predictions_small/XGB_MAF_MARX_forecast_small.csv", row.names=FALSE)
+write.csv(XGB_X_F_MAF_forecast, "XGB_Predictions_small/XGB_X_F_MAF_forecast_small.csv", row.names=FALSE)
+write.csv(XGB_X_F_MARX_forecast, "XGB_Predictions_small/XGB_X_F_MARX_forecast_small.csv", row.names=FALSE)
+write.csv(XGB_X_MAF_MARX_forecast, "XGB_Predictions_small/XGB_X_MAF_MARX_forecast_small.csv", row.names=FALSE)
+write.csv(XGB_F_MAF_MARX_forecast, "XGB_Predictions_small/XGB_F_MAF_MARX_forecast_small.csv", row.names=FALSE)
+write.csv(XGB_X_F_MAF_MARX_forecast, "XGB_Predictions_small/XGB_X_F_MAF_MARX_forecast_small.csv", row.names=FALSE)
+
+RMSE_XGB_small <- rbind(RMSE_XGB_X_forecast, RMSE_XGB_F_forecast, RMSE_XGB_MAF_forecast, RMSE_XGB_MARX_forecast, 
+                        RMSE_XGB_X_F_forecast, RMSE_XGB_X_MAF_forecast, RMSE_XGB_X_MARX_forecast,
+                        RMSE_XGB_F_MAF_forecast, RMSE_XGB_F_MARX_forecast, RMSE_XGB_MAF_MARX_forecast,
+                        RMSE_XGB_X_F_MAF_forecast, RMSE_XGB_X_F_MARX_forecast, RMSE_XGB_X_MAF_MARX_forecast,
+                        RMSE_XGB_F_MAF_MARX_forecast, RMSE_XGB_X_F_MAF_MARX_forecast)
+
+write.csv(RMSE_XGB_small, "XGB_Predictions_small/RMSE_XGB_small.csv", row.names=FALSE)
