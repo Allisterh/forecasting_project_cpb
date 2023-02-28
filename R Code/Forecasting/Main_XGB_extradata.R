@@ -8,8 +8,12 @@ library(data.table)
 library(tseries)
 library(caret)
 library(xgboost)
+library(tidyverse)
 
 ## ---- DATA ----
+source("Function_File.r")
+source("Data_File.r")
+
 df_cpb <- read.csv("data-eur2023.csv", row.names = 1)
 df_extra <- read.csv("data_additional.csv")
 
