@@ -145,7 +145,7 @@ RMSE_function <- function(actual, prediction){
 XGB_X_forecast <- Forecasting_function_XGB(y_differenced, X, poos, horizons) 
 RMSE_XGB_X_forecast <- RMSE_function(y_real,XGB_X_forecast)
 
-XGB_F_forecast <- Forecasting_function_XGB(y_differenced, X, poos, horizons) 
+XGB_F_forecast <- Forecasting_function_XGB(y_differenced, F, poos, horizons) 
 RMSE_XGB_F_forecast <- RMSE_function(y_real,XGB_F_forecast)
 
 XGB_MAF_forecast <- Forecasting_function_XGB(y_differenced, MAF, poos, horizons) 
@@ -154,5 +154,36 @@ RMSE_XGB_MAF_forecast <- RMSE_function(y_real,XGB_MAF_forecast)
 XGB_MARX_forecast <- Forecasting_function_XGB(y_differenced, MARX, poos, horizons) 
 RMSE_XGB_MARX_forecast <- RMSE_function(y_real,XGB_MARX_forecast)
 
+XGB_X_F_forecast <- Forecasting_function_XGB(y_differenced, X_F, poos, horizons) 
+RMSE_XGB_X_F_forecast <- RMSE_function(y_real,XGB_X_F_forecast)
 
+XGB_X_MAF_forecast <- Forecasting_function_XGB(y_differenced, X_MAF, poos, horizons) 
+RMSE_XGB_X_MAF_forecast <- RMSE_function(y_real,XGB_X_MAF_forecast)
+
+XGB_X_MARX_forecast <- Forecasting_function_XGB(y_differenced, X_MARX, poos, horizons) 
+RMSE_XGB_X_MARX_forecast <- RMSE_function(y_real,XGB_X_MARX_forecast)
+
+XGB_F_MAF_forecast <- Forecasting_function_XGB(y_differenced, F_MAF, poos, horizons) 
+RMSE_XGB_F_MAF_forecast <- RMSE_function(y_real,XGB_F_MAF_forecast)
+
+XGB_F_MARX_forecast <- Forecasting_function_XGB(y_differenced, F_MARX, poos, horizons) 
+RMSE_XGB_F_MARX_forecast <- RMSE_function(y_real,XGB_F_MARX_forecast)
+
+XGB_MAF_MARX_forecast <- Forecasting_function_XGB(y_differenced, MAF_MARX, poos, horizons) 
+RMSE_XGB_MAF_MARX_forecast <- RMSE_function(y_real,XGB_MAF_MARX_forecast)
+
+XGB_X_F_MAF_forecast <- Forecasting_function_XGB(y_differenced, X_F_MAF, poos, horizons) 
+RMSE_XGB_X_F_MAF_forecast <- RMSE_function(y_real,XGB_X_F_MAF_forecast)
+
+XGB_X_F_MARX_forecast <- Forecasting_function_XGB(y_differenced, X_F_MARX, poos, horizons) 
+RMSE_XGB_X_F_MARX_forecast <- RMSE_function(y_real,XGB_X_F_MARX_forecast)
+
+XGB_X_MAF_MARX_forecast <- Forecasting_function_XGB(y_differenced, X_MAF_MARX, poos, horizons) 
+RMSE_XGB_X_MAF_MARX_forecast <- RMSE_function(y_real,XGB_X_MAF_MARX_forecast)
+
+XGB_F_MAF_MARX_forecast <- Forecasting_function_XGB(y_differenced, F_MAF_MARX, poos, horizons) 
+RMSE_XGB_F_MAF_MARX_forecast <- RMSE_function(y_real,XGB_F_MAF_MARX_forecast)
+
+XGB_X_F_MAF_MARX_forecast <- Forecasting_function_XGB(y_differenced, X_F_MAF_MARX, poos, horizons) 
+RMSE_XGB_X_F_MAF_MARX_forecast <- RMSE_function(y_real,XGB_X_F_MAF_MARX_forecast)
 

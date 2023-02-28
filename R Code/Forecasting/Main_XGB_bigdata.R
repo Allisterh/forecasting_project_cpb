@@ -147,7 +147,7 @@ RMSE_function <- function(actual, prediction){
 XGB_X_forecast <- Forecasting_function_XGB(y_differenced, X, poos, horizons) 
 RMSE_XGB_X_forecast <- RMSE_function(y_real,XGB_X_forecast)
 
-XGB_F_forecast <- Forecasting_function_XGB(y_differenced, X, poos, horizons) 
+XGB_F_forecast <- Forecasting_function_XGB(y_differenced, F, poos, horizons) 
 RMSE_XGB_F_forecast <- RMSE_function(y_real,XGB_F_forecast)
 
 XGB_MAF_forecast <- Forecasting_function_XGB(y_differenced, MAF, poos, horizons) 
