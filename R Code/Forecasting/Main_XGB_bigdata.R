@@ -14,15 +14,15 @@ source("Function_File.r")
 
 # If you use the small dataset: only cpb.infl.stationary
 df_cpb_infl_stat <- read.csv("Extra data/data_core.csv")
-df_cpb <- read.csv("data-eur2023.csv", row.names = 1)
+#df_cpb <- read.csv("data-eur2023.csv", row.names = 1)
 df_additional_stat <- read.csv("Extra data/data_additional.csv")
-Unempl <- df_cpb$L2_LRHUTTTT
-y_differenced <- df_cpb_infl_stat$L2_LRHUTTTT
+#Unempl <- df_cpb$L2_LRHUTTTT
 
-df_small <- df_cpb_infl_stat
+#df_small <- df_cpb_infl_stat
 
 # If big dataset: combine cpb.infl.stationary and additional.data.stationary
 df_big <- cbind(df_cpb_infl_stat[50:433,], df_additional_stat)
+y_differenced <- df_big$L2_LRHUTTTT
 
 ## -- BIG DATA --
 # Define stationary dataframes
@@ -39,17 +39,17 @@ n_MAF <- 2 # Coulombe
 P_MARX <- 12 # Lags for MARX, same as X_lags, also Coulombe 
 
 # -- Make feature matrices --
-source("Function Feature Matrix.r")
+source("Function_File.r")
 
-X <- as.data.frame(shift(regressor_matrix_diff,n=0:X_lags, type = 'lag', give.names=TRUE))
+X <- as.data.frame(shift(regressor_matrix,n=0:X_lags, type = 'lag', give.names=TRUE))
 
-scaled_regressor_matrix <- scale(regressor_matrix_diff) #Scale Regressor Matrix for PCA in F
+scaled_regressor_matrix <- scale(regressor_matrix) #Scale Regressor Matrix for PCA in F
 F <- F_function(scaled_regressor_matrix, n_Factors, F_lags)
 
 scaled_X <- scale(X) #Scale lagged X Matrix for MAF
-MAF <- MAF_function2(scaled_X,X_lags,nrow(scaled_X),ncol(regressor_matrix_diff), P_MAF, n_MAF, FALSE)
+MAF <- MAF_function(scaled_X,X_lags,nrow(scaled_X),ncol(regressor_matrix), P_MAF, n_MAF, FALSE)
 
-MARX <- MARX_function(regressor_matrix_diff, P_MARX)
+MARX <- MARX_function(regressor_matrix, P_MARX, n_var)
 
 X_F <- cbind(X, F)
 X_MAF <- cbind(X, MAF)
@@ -67,12 +67,10 @@ X_F_MAF_MARX <- cbind(X, F, MAF, MARX)
 
 # -- Forecast Initialization --
 poos <- 120
-Unempl <- df_cpb[,2] # (X_lags+1)
 y_real <- y_differenced[(length(y_differenced)-poos+1):length(y_differenced)]
-start_forecast <- length(Unempl)-poos+1
-end_forecast <- length(Unempl)
-horizons <- list(3, 6, 12, 18, 24) #
-ntrees <- 500 # Default value
+start_forecast <- length(y_differenced)-poos+1
+end_forecast <- length(y_differenced)
+horizons <- list(3, 6, 12, 18, 24) 
 
 # -- forecasting
 Forecasting_function_XGB <- function(y, Z, n_forecast, horizons){
@@ -86,8 +84,7 @@ Forecasting_function_XGB <- function(y, Z, n_forecast, horizons){
     
     shift_y = as.data.frame(shift(y,n=h, type = 'lead', give.names=TRUE))
     colnames(shift_y) = 'y'
-    shift_y <- shift_y[2:433,] #As the last column is differenced twice, we need to remove first observation
-    
+
     y_Z <- na.omit(cbind(shift_y, Z))
     
     i <- i+1
@@ -96,14 +93,13 @@ Forecasting_function_XGB <- function(y, Z, n_forecast, horizons){
     train_y <- y_Z[1:(nrow(y_Z)-n_forecast),1]
     
     for (f in 1:n_forecast){
-      #for (f in 1:25){  
       print(f)
       train_x <- y_Z[1:(nrow(y_Z)-n_forecast+f-1),2:ncol(y_Z)]
       train_y <- y_Z[1:(nrow(y_Z)-n_forecast+f-1),1]
       test_x <- y_Z[nrow(y_Z)-n_forecast+f,2:ncol(y_Z)]
       test_y <- y_Z[nrow(y_Z)-n_forecast+f,1]
       
-      if(f==1 || f%%24==0){
+      if(f==1 || f%%24==0 & f!= 120){
         
         # specifying the CV technique which will be passed into the train() function later 
         #and number parameter is the "k" in K-fold cross validation
