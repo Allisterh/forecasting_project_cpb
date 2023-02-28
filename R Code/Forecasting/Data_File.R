@@ -104,21 +104,21 @@ colnames(interest) <- c("Short_interest","Long_interest")
 rm(interestshort,interestlong)
 
 # Combine data
-df_additional <- cbind(buildingcost,buildpermits,faillisementen,logstocks[,2:5],fin_stress,commodities,interest)
+additional.data <- cbind(buildingcost,buildpermits,faillisementen,logstocks[,2:5],fin_stress,commodities,interest)
 
 # -- transformations -- 
 
 # Check if (additional) data stationary
-df_core <- make.stationary(df[,-1])
-df_addstat <- make.stationary(df_additional[,-1])
+cpb.infl.stationary <- make.stationary(df[,-1])
+additional.data.stationary <- make.stationary(additional.data [,-1])
 
-check.stationary(df_core)
-check.stationary(df_addstat)
+check.stationary(cpb.infl.stationary)
+check.stationary(additional.data.stationary)
 
-write.csv(df_core, "Extra data/data_core.csv", row.names=FALSE)
-write.csv(df_additional, "Extra data/data_additional.csv", row.names=FALSE)
+write.csv(cpb.infl.stationary , "Extra data/data_core.csv", row.names=FALSE)
+write.csv(additional.data.stationary, "Extra data/data_additional.csv", row.names=FALSE)
 
-df_original <- df
-#df_full <- cbind(df_core[49:433,],)
+cpb.inflation.non.stationary <- df
+#df_full <- cbind(cpb.infl.stationary[49:433,],)
 
 rm(logstocks,interest,commodities,df,buildingcost,buildpermits,faillisementen,fin_stress)

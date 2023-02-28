@@ -14,9 +14,18 @@ library(lubridate)
 library(dplyr)
 library(yahoofinancer)
 library(xtable)
+library(Rssa)
+library(ggplot2)
+library(gridExtra)
+library(cowplot)
 
 source("Function_File.r")
 source("Data_File.r")
+
+# If you use the small dataset: only cpb.infl.stationary
+
+
+# If big dataset: combine cpb.infl.stationary and additional.data.stationary
 
 # Define stationary dataframes
 regressor_matrix <- new_df[-c(1)] # Dependent variable
@@ -66,7 +75,7 @@ end_forecast <- length(Unempl)
 horizons <- list(3, 6, 12, 18, 24) # 
 ntrees <- 500 # Default value
 
-# -- forecasting
+# -- forecasting --
 
 RF_X_forecast <- Forecasting_function_RF(Unempl, X, poos, horizons, ntrees) # 
 RF_X_F_forecast <- Forecasting_function_RF(Unempl, X_F, poos, horizons, ntrees) #
@@ -81,7 +90,10 @@ RF_X_MAF_MARX_forecast <- Forecasting_function_RF(Unempl, X_MAF_MARX, poos, hori
 RF_F_MAF_MARX_forecast <- Forecasting_function_RF(Unempl, F_MAF_MARX, poos, horizons, ntrees) #
 RF_X_F_MAF_MARX_forecast <- Forecasting_function_RF(Unempl, X_F_MAF_MARX, poos, horizons, ntrees) #
 
+
+
 # ---- XGB Forecast ----
+
 XGB_X_forecast <- Forecasting_function_XGB(Unempl, X, poos, horizons) # 
 XGB_X_F_forecast <- Forecasting_function_XGB(Unempl, X_F, poos, horizons) #
 XGB_X_MAF_forecast <- Forecasting_function_XGB(Unempl, X_MAF, poos, horizons) # 

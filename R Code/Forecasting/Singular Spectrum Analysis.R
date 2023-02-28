@@ -14,7 +14,12 @@ L = sqrt(nrow(data))
 L = 50
 L = 120
 
-U = ssa(data$L2_LRHUTTTT,L,neig = 40,kind = "1d-ssa")
+U = ssa(df_original$L1_BCCI,L,neig = 40,kind = "1d-ssa")
+g <- grouping.auto(U, grouping.method = "wcor", 
+                   method = "average", nclust = 4)
+rcon = reconstruct(U, groups = g)
+plot(rcon)
+
 X = ssa(data$L1_BRCI,L,kind = "1d-ssa")
 Z = ssa(data$L1_BSCI,L,kind = "1d-ssa")
 plot(log(U$sigma))
