@@ -10,50 +10,32 @@ library(caret)
 library(xgboost)
 library(tidyverse)
 
-## ---- DATA ----
 source("Function_File.r")
-source("Data_File.r")
 
+# If you use the small dataset: only cpb.infl.stationary
+df_cpb_infl_stat <- read.csv("Extra data/data_core.csv")
 df_cpb <- read.csv("data-eur2023.csv", row.names = 1)
-df_extra <- read.csv("data_additional.csv")
+df_additional_stat <- read.csv("Extra data/data_additional.csv")
+Unempl <- df_cpb$L2_LRHUTTTT
+y_differenced <- df_cpb_infl_stat$L2_LRHUTTTT
 
-# -- transformations -- 
-tobedifferenced_matrix <- df_cpb[-c(1)] # Remove pubdate 
-colstodiff <- c(1, 2, 3, 6, 7, 8)
+df_small <- df_cpb_infl_stat
 
-# take the first difference of the selected columns
-diff_data <- diff(as.matrix(tobedifferenced_matrix[, colstodiff]), differences = 1)
-diff_data <- data.frame(cbind(diff_data, df_cpb$L1_BSCI[2:434], df_cpb$L1_CSCICP02[2:434], df_cpb$L1_AEX[2:434]))
+# If big dataset: combine cpb.infl.stationary and additional.data.stationary
+df_big <- cbind(df_cpb_infl_stat[50:433,], df_additional_stat)
 
-y_differenced <- diff_data[,1]
-regressor_matrix_diff <- diff_data[-c(1)]
-n_var <- ncol(regressor_matrix_diff)
-T <- nrow(regressor_matrix_diff)
+## -- SMALL DATA --
+# Define stationary dataframes
+regressor_matrix <- df_small[-c(1)] # Dependent variable
+n_var <- ncol(regressor_matrix)
+T <- nrow(regressor_matrix)
 
-# Check if data stationary: H0: not stationary --> reject = ~ stationary
-adf_cpb.test(y_differenced) #stationary
-adf_cpb.test(regressor_matrix_diff[,1]) #stationary
-adf_cpb.test(regressor_matrix_diff[,2]) #stationary
-adf_cpb.test(regressor_matrix_diff[,3]) #stationary
-adf_cpb.test(regressor_matrix_diff[,4]) #stationary
-adf_cpb.test(regressor_matrix_diff[,5]) #stationary
-adf_cpb.test(regressor_matrix_diff[,6]) #stationary
-adf_cpb.test(regressor_matrix_diff[,7]) #stationary
-adf_cpb.test(regressor_matrix_diff[,8]) #not stationary (not rejected)
-
-diff2_AEX <- diff(regressor_matrix_diff[,8], differences = 1)
-adf_cpb.test(diff2_AEX) #stationary
-regressor_matrix_diff <- data.frame(cbind(regressor_matrix_diff[2:433,1:7], diff2_AEX)) 
-
-#Merge dataframes
-df_all <- cbind(regressor_matrix_diff, df_extra)
-
-# -- Parameter initalizations for feature matrix --
+# -- Parameter initializations for feature matrix --
 X_lags <- 12 # We use the data up until one year before
-n_Factors <- 2 # Optimization
+n_Factors <- 8 # Coulombe
 F_lags <- 12 # Same reason as X, also because Coulombe
 P_MAF <- 12 # Summarize data up until one year 
-n_MAF <- 6 # Optimization 
+n_MAF <- 2 # Coulombe 
 P_MARX <- 12 # Lags for MARX, same as X_lags, also Coulombe 
 
 # -- Make feature matrices --
