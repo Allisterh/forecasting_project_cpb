@@ -7,7 +7,7 @@ df_big <- read.csv("Extra data/data_additional.csv")
 df_big_new <- cbind(df_small[((433-384+1):433),], df_big)
 
 ### ---- FEATURE ENGINEERING ----
-regressor_matrix <- df_big_new[-c(1)] #Remove dependent variable
+regressor_matrix <- df_small[-c(1)] #Remove dependent variable
 n_var <- ncol(regressor_matrix)
 T <- nrow(regressor_matrix)
 X_lags <- 12
@@ -33,7 +33,7 @@ n_factors_opt <- function(regressor_matrix, T, boolo){
     eigenvalues <- X_pca$sdev^2
     numberofPCs <- 0
     for (i in 1:length(eigenvalues)){
-      if (eigenvalues[i] > 1){
+      if (eigenvalues[i] > 0.7){
         numberofPCs <- numberofPCs + 1
       }
     }

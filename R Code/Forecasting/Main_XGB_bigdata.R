@@ -32,7 +32,7 @@ T <- nrow(regressor_matrix)
 
 # -- Parameter initializations for feature matrix --
 X_lags <- 12 # We use the data up until one year before
-n_Factors <- 8 # Coulombe
+n_Factors <- 8 # Coulombe (BIG DATA)
 F_lags <- 12 # Same reason as X, also because Coulombe
 P_MAF <- 12 # Summarize data up until one year 
 n_MAF <- 2 # Coulombe 
