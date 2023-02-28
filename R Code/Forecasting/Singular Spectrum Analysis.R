@@ -9,7 +9,7 @@ library(cowplot)
 data = read.csv("D:/EUR/Master/Seminar Case studies in Applied Econometrics/data-eur2023.csv", sep=';',row.names = 1)
 
 
-plot(data$L1_BCCI)
+plot(data$L1_BRCI, type = 'l')
 L = sqrt(nrow(data))
 L = 50
 L = 120
@@ -44,8 +44,12 @@ plot(SSA_un, type = "vectors", idx = 1:20)
 plot(SSA_un, type = "paired", idx = 1:20, plot.contrib = FALSE)
 dev.off()
 
-recon = reconstruct(U, group = list(1,2,c(4,6),c(3,5)))
-plot(recon)
+g <- grouping.auto(X, grouping.method = "wcor", 
+                   method = "average", nclust = 10)
+recon = reconstruct(X, group = g)
+recon = reconstruct(X, group = list(1,2,c(4,6),c(3,5)))
+plot(recon$'2')
+
 
 # Producer confidence: Construction
 SSA_construction = ssa(data$L1_BCCI,L,neig = 40,kind = "1d-ssa")
@@ -58,7 +62,7 @@ plot(SSA_construction, type = "vectors", idx = 1:20)
 plot(SSA_construction, type = "paired", idx = 1:20, plot.contrib = FALSE)
 dev.off()
 
-recon = reconstruct(U, group = list(1,2,c(4,6),c(3,5)))
+recon = reconstruct(X, group = list(1,2,3,4,5))
 plot(recon)
 
 
@@ -156,8 +160,8 @@ SSA_transformation = function(df,nrgroups,L,automaticgrouping = TRUE) { # Dates 
 }
 
 sum(U$sigma[1:3])
-g <- grouping.auto(U, grouping.method = "wcor", method = "average", nclust = 15)
-for (i in 1:10) {print(g[[i]])}
+g <- grouping.auto(X, grouping.method = "wcor", method = "average", nclust = 15)
+for (i in 1:15) {print(g[[i]])}
 
 for (k in 0:119){
   testeru = SSA_transformation(data[1:315+k,],10,L)

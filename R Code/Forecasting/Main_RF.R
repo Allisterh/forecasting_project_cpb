@@ -9,37 +9,14 @@ library(tseries)
 library(xgboost)
 library(caret)
 library(tidyverse)	
+library(cbsodataR)
+library(lubridate)
+library(dplyr)
+library(yahoofinancer)
+library(xtable)
 
-## ---- DATA ----
-
-df <- read.csv("data-eur2023.csv", row.names = 1)
-
-# -- transformations -- 
-
-# Check if data stationary
-adf.test(df[,2])
-adf.test(df[,3])
-adf.test(df[,4])
-adf.test(df[,5])
-adf.test(df[,6])
-adf.test(df[,7])
-adf.test(df[,8])
-adf.test(df[,9])
-adf.test(df[,10])
-
-# Make data stationary with first differences
-colstodiff <- c(2, 3, 4, 7, 8, 9)
-diff_data <- diff(as.matrix(df[, colstodiff]), differences = 1)
-new_df <- cbind(diff_data[,1:3], df[2:434,5:6],diff_data[,4:6],df[2:434,10])
-colnames(new_df)[9] = "AEX.VOL"
-
-# Check if actually stationary
-adf.test(diff_data[,1])
-adf.test(diff_data[,2])
-adf.test(diff_data[,3])
-adf.test(diff_data[,4])
-adf.test(diff_data[,5])
-adf.test(diff_data[,6])
+source("Function_File.r")
+source("Data_File.r")
 
 # Define stationary dataframes
 regressor_matrix <- new_df[-c(1)] # Dependent variable
@@ -55,7 +32,6 @@ n_MAF <- 6 # Optimization
 P_MARX <- 12 # Lags for MARX, same as X_lags, also Coulombe 
 
 # -- Make feature matrices --
-source("Function_File.r")
 
 X <- as.data.frame(shift(regressor_matrix,n=0:X_lags, type = 'lag', give.names=TRUE))
 
@@ -118,3 +94,5 @@ XGB_X_F_MARX_forecast <- Forecasting_function_XGB(Unempl, X_F_MARX, poos, horizo
 XGB_X_MAF_MARX_forecast <- Forecasting_function_XGB(Unempl, X_MAF_MARX, poos, horizons) #
 XGB_F_MAF_MARX_forecast <- Forecasting_function_XGB(Unempl, F_MAF_MARX, poos, horizons) #
 XGB_X_F_MAF_MARX_forecast <- Forecasting_function_XGB(Unempl, X_F_MAF_MARX, poos, horizons) #
+
+sqrt(mean((XGB_X_forecast[,1]-y_real)^2))

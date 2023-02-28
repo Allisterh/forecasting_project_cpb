@@ -9,6 +9,33 @@ library(xgboost)
 library(caret)
 library(tidyverse)	
 
+## -- Making Dataframe Stationary --
+make.stationary <- function(df){
+  df_2 = data.frame(matrix(nrow = nrow(df)-1, ncol = ncol(df))) 
+  for (i in 1:ncol(df)) {
+    if (adf.test(df[,i])$p.value > 0.05){
+      df_2[,i] <- diff(df[,i],differences=1)
+    }
+    else {
+      df_2[,i] <- df[-1,i]
+    }
+  }
+  colnames(df_2) <- colnames(df)
+  return(df_2)
+}
+
+check.stationary <- function(df){
+  for (i in 1:ncol(df)) {
+    print(adf.test(df[,i])$p.value)
+    if (adf.test(df[,i])$p.value > 0.05){
+      print("non-stationary")
+    }
+    else {
+      print("stationary")
+    }
+  }
+}
+
 ## -- Feature Engineering --
 
 ## - F - Feature matrix of Factors and their lags
