@@ -43,6 +43,23 @@ XGB_X_MAF_MARX_forecast_small <- read.csv("XGB_Predictions_small/XGB_X_MAF_MARX_
 XGB_F_MAF_MARX_forecast_small <- read.csv("XGB_Predictions_small/XGB_F_MAF_MARX_forecast_small.csv")
 XGB_X_F_MAF_MARX_forecast_small <- read.csv("XGB_Predictions_small/XGB_X_F_MAF_MARX_forecast_small.csv")
 
+# XGB BIG Prediction data
+XGB_X_forecast_big <- read.csv("XGB_Predictions_big/XGB_X_forecast_big.csv")
+XGB_F_forecast_big <- read.csv("XGB_Predictions_big/XGB_F_forecast_big.csv")
+XGB_MAF_forecast_big <- read.csv("XGB_Predictions_big/XGB_MAF_forecast_big.csv")
+XGB_MARX_forecast_big <- read.csv("XGB_Predictions_big/XGB_MARX_forecast_big.csv")
+XGB_X_F_forecast_big <- read.csv("XGB_Predictions_big/XGB_X_F_forecast_big.csv")
+XGB_X_MAF_forecast_big <- read.csv("XGB_Predictions_big/XGB_X_MAF_forecast_big.csv")
+XGB_X_MARX_forecast_big <- read.csv("XGB_Predictions_big/XGB_X_MARX_forecast_big.csv")
+XGB_F_MAF_forecast_big <- read.csv("XGB_Predictions_big/XGB_F_MAF_forecast_big.csv")
+XGB_F_MARX_forecast_big <- read.csv("XGB_Predictions_big/XGB_F_MARX_forecast_big.csv")
+XGB_MAF_MARX_forecast_big <- read.csv("XGB_Predictions_big/XGB_MAF_MARX_forecast_big.csv")
+XGB_X_F_MAF_forecast_big <- read.csv("XGB_Predictions_big/XGB_X_F_MAF_forecast_big.csv")
+XGB_X_F_MARX_forecast_big <- read.csv("XGB_Predictions_big/XGB_X_F_MARX_forecast_big.csv")
+XGB_X_MAF_MARX_forecast_big <- read.csv("XGB_Predictions_big/XGB_X_MAF_MARX_forecast_big.csv")
+XGB_F_MAF_MARX_forecast_big <- read.csv("XGB_Predictions_big/XGB_F_MAF_MARX_forecast_big.csv")
+XGB_X_F_MAF_MARX_forecast_big <- read.csv("XGB_Predictions_big/XGB_X_F_MAF_MARX_forecast_big.csv")
+
 ### --- Marginal Effects --- 
 # - Initializing -
 library(ggplot2)
@@ -166,18 +183,88 @@ Marginal_allhorizons_XGB_SMALL$Feature <- as.factor(Marginal_allhorizons_XGB_SMA
 
 # - Grid Arrange -  
 ggp1 <- ggplot(Marginal_allhorizons_XGB_SMALL, aes(x=Feature, y=h3, color=Feature)) + geom_boxplot() + 
-  guides(fill=FALSE) + coord_flip() + theme(legend.position = "none") + theme(plot.title = element_text(hjust=0.5, size=size_title), axis.title.x=element_blank(), axis.title.y=element_blank(), axis.text.y=element_blank())+ggtitle("h=3")
+  guides(fill=FALSE) + coord_flip() + theme(legend.position = "none", plot.title = element_text(hjust=0.5, size=size_title), 
+  axis.title.x=element_blank(), axis.title.y=element_blank(), axis.text.y=element_blank())+ggtitle("h=3") 
 
 ggp2 <- ggplot(Marginal_allhorizons_XGB_SMALL, aes(x=Feature, y=h6, color=Feature)) + geom_boxplot() + 
-  guides(fill=FALSE) + coord_flip() + theme(legend.position = "none") + theme(plot.title = element_text(hjust=0.5, size=size_title),axis.title.x=element_blank(), axis.title.y=element_blank(), axis.text.y=element_blank())+ggtitle("h=6")
+  guides(fill=FALSE) + coord_flip() + theme(legend.position = "none",plot.title = element_text(hjust=0.5, size=size_title),
+  axis.title.x=element_blank(), axis.title.y=element_blank(), axis.text.y=element_blank())+ggtitle("h=6") 
 
 ggp3 <- ggplot(Marginal_allhorizons_XGB_SMALL, aes(x=Feature, y=h12, color=Feature)) + geom_boxplot() + 
-  guides(fill=FALSE) + coord_flip() + theme(legend.position = "none") + theme(plot.title = element_text(hjust=0.5, size=size_title),axis.title.x=element_blank(), axis.title.y=element_blank(), axis.text.y=element_blank())+ggtitle("h=12")
+  guides(fill=FALSE) + coord_flip() + theme(legend.position = "none",plot.title = element_text(hjust=0.5, size=size_title),
+  axis.title.x=element_blank(), axis.title.y=element_blank(), axis.text.y=element_blank())+ggtitle("h=12")
 
 ggp4 <- ggplot(Marginal_allhorizons_XGB_SMALL, aes(x=Feature, y=h18, color=Feature)) + geom_boxplot() + 
-  guides(fill=FALSE) + coord_flip() + theme(legend.position = "none") + theme(plot.title = element_text(hjust=0.5, size=size_title),axis.title.x=element_blank(), axis.title.y=element_blank(), axis.text.y=element_blank())+ggtitle("h=18")
+  guides(fill=FALSE) + coord_flip() + theme(legend.position = "none",plot.title = element_text(hjust=0.5, size=size_title),
+  axis.title.x=element_blank(), axis.title.y=element_blank(), axis.text.y=element_blank())+ggtitle("h=18")
 
 ggp5 <- ggplot(Marginal_allhorizons_XGB_SMALL, aes(x=Feature, y=h24, color=Feature)) + geom_boxplot() + 
+  guides(fill=FALSE) + coord_flip() + theme(legend.position = "none",plot.title = element_text(hjust=0.5, size=size_title), 
+  axis.title.x=element_blank(), axis.title.y=element_blank(), axis.text.y=element_blank())+ggtitle("h=24")
+
+grid.arrange(ggp1, ggp2, ggp3, ggp4, ggp5, ncol = 5)
+
+## -- Calculating Marginal Effects (XGB BIG)--
+# F
+Mf_matrices <- list(XGB_X_F_forecast_big, XGB_F_MAF_forecast_big, XGB_F_MARX_forecast_big, XGB_X_F_MAF_forecast_big, XGB_X_F_MARX_forecast_big, XGB_F_MAF_MARX_forecast_big, XGB_X_F_MAF_MARX_forecast_big)
+F_matrices <- list(XGB_X_forecast_big, XGB_MAF_forecast_big, XGB_MARX_forecast_big, XGB_X_MAF_forecast_big, XGB_X_MARX_forecast_big, XGB_MAF_MARX_forecast_big, XGB_X_MAF_MARX_forecast_big)
+
+XGB_big_F_marginal_Rsquared <- marginal_function(horizons, y_real, Mf_matrices, F_matrices)
+
+# MAF
+Mf_matrices <- list(XGB_X_MAF_forecast_big, XGB_F_MAF_forecast_big, XGB_MAF_MARX_forecast_big, XGB_X_F_MAF_forecast_big, XGB_X_MAF_MARX_forecast_big, XGB_F_MAF_MARX_forecast_big, XGB_X_F_MAF_MARX_forecast_big)
+F_matrices <- list(XGB_X_forecast_big, XGB_F_forecast_big, XGB_MARX_forecast_big, XGB_X_F_forecast_big, XGB_X_MARX_forecast_big, XGB_F_MARX_forecast_big, XGB_X_F_MARX_forecast_big)
+
+XGB_big_MAF_marginal_Rsquared <- marginal_function(horizons, y_real, Mf_matrices, F_matrices)
+
+# MARX
+Mf_matrices <- list(XGB_X_MARX_forecast_big, XGB_MAF_MARX_forecast_big, XGB_F_MARX_forecast_big, XGB_X_MAF_MARX_forecast_big, XGB_F_MAF_MARX_forecast_big, XGB_X_F_MAF_MARX_forecast_big, XGB_X_F_MARX_forecast_big)
+F_matrices <- list(XGB_X_forecast_big, XGB_MAF_forecast_big, XGB_F_forecast_big, XGB_X_MAF_forecast_big, XGB_F_MAF_forecast_big, XGB_X_F_MAF_forecast_big, XGB_X_F_forecast_big)
+
+XGB_big_MARX_marginal_Rsquared <- marginal_function(horizons, y_real, Mf_matrices, F_matrices)
+
+## -- Plotting Marginal Effects (XGB BIG) --
+size_title <- 10
+Marginal_allhorizons_XGB_big <- data.frame(matrix(ncol = 6, nrow = 3*length(Mf_matrices)))
+Marginal_allhorizons_XGB_big[,1] <- t(cbind(t(rep("F",length(Mf_matrices))), t(rep("MAF",length(Mf_matrices))), t(rep("MARX",length(Mf_matrices)))))
+colnames(Marginal_allhorizons_XGB_big) <- c("Feature", "h3", "h6", "h12", "h18", "h24")
+
+for (f in 1:length(horizons)){
+  Marginal_allhorizons_XGB_big[,f+1] <- t(cbind(t(XGB_big_F_marginal_Rsquared[,f]), t(XGB_big_MAF_marginal_Rsquared[,f]), t(XGB_big_MARX_marginal_Rsquared[,f])))
+}
+Marginal_allhorizons_XGB_big$Feature <- as.factor(Marginal_allhorizons_XGB_big$Feature)
+
+# - Grid Arrange -  
+ggp1 <- ggplot(Marginal_allhorizons_XGB_big, aes(x=Feature, y=h3, color=Feature)) + geom_boxplot() + 
+  guides(fill=FALSE) + coord_flip() + theme(legend.position = "none") + theme(plot.title = element_text(hjust=0.5, size=size_title), axis.title.x=element_blank(), axis.title.y=element_blank(), axis.text.y=element_blank())+ggtitle("h=3")
+
+ggp2 <- ggplot(Marginal_allhorizons_XGB_big, aes(x=Feature, y=h6, color=Feature)) + geom_boxplot() + 
+  guides(fill=FALSE) + coord_flip() + theme(legend.position = "none") + theme(plot.title = element_text(hjust=0.5, size=size_title),axis.title.x=element_blank(), axis.title.y=element_blank(), axis.text.y=element_blank())+ggtitle("h=6")
+
+ggp3 <- ggplot(Marginal_allhorizons_XGB_big, aes(x=Feature, y=h12, color=Feature)) + geom_boxplot() + 
+  guides(fill=FALSE) + coord_flip() + theme(legend.position = "none") + theme(plot.title = element_text(hjust=0.5, size=size_title),axis.title.x=element_blank(), axis.title.y=element_blank(), axis.text.y=element_blank())+ggtitle("h=12")
+
+ggp4 <- ggplot(Marginal_allhorizons_XGB_big, aes(x=Feature, y=h18, color=Feature)) + geom_boxplot() + 
+  guides(fill=FALSE) + coord_flip() + theme(legend.position = "none") + theme(plot.title = element_text(hjust=0.5, size=size_title),axis.title.x=element_blank(), axis.title.y=element_blank(), axis.text.y=element_blank())+ggtitle("h=18")
+
+ggp5 <- ggplot(Marginal_allhorizons_XGB_big, aes(x=Feature, y=h24, color=Feature)) + geom_boxplot() + 
   guides(fill=FALSE) + coord_flip() + theme(legend.position = "none") + theme(plot.title = element_text(hjust=0.5, size=size_title), axis.title.x=element_blank(), axis.title.y=element_blank(), axis.text.y=element_blank())+ggtitle("h=24")
 
 grid.arrange(ggp1, ggp2, ggp3, ggp4, ggp5, ncol = 5)
+
+## -- MEDIANS --
+median_xgb_small_h3_F <- median(Marginal_allhorizons_XGB_SMALL[1:7,2])
+median_xgb_small_h3_MAF <- median(Marginal_allhorizons_XGB_SMALL[8:14,2])
+median_xgb_small_h3_MARX <- median(Marginal_allhorizons_XGB_SMALL[15:21,2])
+
+median_xgb_small_h24_F <- median(Marginal_allhorizons_XGB_SMALL[1:7,6])
+median_xgb_small_h24_MAF <- median(Marginal_allhorizons_XGB_SMALL[8:14,6])
+median_xgb_small_h24_MARX <- median(Marginal_allhorizons_XGB_SMALL[15:21,6])
+
+median_xgb_big_h3_F <- median(Marginal_allhorizons_XGB_big[1:7,2])
+median_xgb_big_h3_MAF <- median(Marginal_allhorizons_XGB_big[8:14,2])
+median_xgb_big_h3_MARX <- median(Marginal_allhorizons_XGB_big[15:21,2])
+
+median_xgb_big_h24_F <- median(Marginal_allhorizons_XGB_big[1:7,6])
+median_xgb_big_h24_MAF <- median(Marginal_allhorizons_XGB_big[8:14,6])
+median_xgb_big_h24_MARX <- median(Marginal_allhorizons_XGB_big[15:21,6])
