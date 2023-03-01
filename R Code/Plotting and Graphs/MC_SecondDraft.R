@@ -9,8 +9,22 @@ regressor_matrix <- df_small[-c(1)] # Dependent variable
 n_var <- ncol(regressor_matrix)
 T <- nrow(regressor_matrix)
 
-# CPB Direct RF Prediction data
-#load data
+# RF SMALL Prediction data
+RF_Small_X <- read.csv("RF_small/RF_Small_X.csv")
+# RF_Small_F <- read.csv("RF_small/RF_Small_F.csv")
+# RF_Small_MAF <- read.csv("RF_small/RF_Small_MAF.csv")
+# RF_Small_MARX <- read.csv("RF_small/RF_Small_MARX.csv")
+RF_Small_X_F <- read.csv("RF_small/RF_Small_X_F.csv")
+RF_Small_X_MAF <- read.csv("RF_small/RF_Small_X_MAF.csv")
+RF_Small_X_MARX <- read.csv("RF_small/RF_Small_X_MARX.csv")
+RF_Small_F_MAF <- read.csv("RF_small/RF_Small_F_MAF.csv")
+RF_Small_F_MARX <- read.csv("RF_small/RF_Small_F_MARX.csv")
+RF_Small_MAF_MARX <- read.csv("RF_small/RF_Small_MAF_MARX.csv")
+RF_Small_X_F_MAF <- read.csv("RF_small/RF_Small_X_F_MAF.csv")
+RF_Small_X_F_MARX <- read.csv("RF_small/RF_Small_X_F_MARX.csv")
+RF_Small_X_MAF_MARX <- read.csv("RF_small/RF_Small_X_MAF_MARX.csv")
+RF_Small_F_MAF_MARX <- read.csv("RF_small/RF_Small_F_MAF_MARX.csv")
+RF_Small_X_F_MAF_MARX <- read.csv("RF_small/RF_Small_X_F_MAF_MARX.csv")
 
 # XGB SMALL Prediction data
 XGB_X_forecast_small <- read.csv("XGB_Predictions_small/XGB_X_forecast_small.csv")
