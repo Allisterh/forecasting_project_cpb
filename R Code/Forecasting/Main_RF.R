@@ -1,6 +1,7 @@
 ### SEMINAR APPLIED ECONOMETRICS 
 rm(list=ls())
 
+library(tidyverse)
 library(BVAR)
 library(randomForest)
 library(vars)
@@ -8,7 +9,6 @@ library(data.table)
 library(tseries)
 library(xgboost)
 library(caret)
-library(tidyverse)	
 library(cbsodataR)
 library(lubridate)
 library(dplyr)
@@ -24,8 +24,9 @@ source("Data_File.r")
 
 # If you use the small dataset: only cpb.infl.stationary
 
-
 # If big dataset: combine cpb.infl.stationary and additional.data.stationary
+
+new_df <- cbind(cpb.infl.stationary[50:433,],additional.data.stationary)
 
 # Define stationary dataframes
 regressor_matrix <- new_df[-c(1)] # Dependent variable
@@ -34,10 +35,10 @@ T <- nrow(regressor_matrix)
 
 # -- Parameter initalizations for feature matrix --
 X_lags <- 12 # We use the data up until one year before
-n_Factors <- 2 # Optimization
+n_Factors <- 8 # Optimization and Coulombe
 F_lags <- 12 # Same reason as X, also because Coulombe
 P_MAF <- 12 # Summarize data up until one year 
-n_MAF <- 6 # Optimization 
+n_MAF <- 2 # Optimization 
 P_MARX <- 12 # Lags for MARX, same as X_lags, also Coulombe 
 
 # -- Make feature matrices --
@@ -82,15 +83,7 @@ RF_X_F_forecast <- Forecasting_function_RF(Unempl, X_F, poos, horizons, ntrees) 
 RF_X_MAF_forecast <- Forecasting_function_RF(Unempl, X_MAF, poos, horizons, ntrees) # 
 RF_X_MARX_forecast <- Forecasting_function_RF(Unempl, X_MARX, poos, horizons, ntrees) # 
 RF_F_MAF_forecast <- Forecasting_function_RF(Unempl, F_MAF, poos, horizons, ntrees) # 
-RF_F_MARX_forecast <- Forecasting_function_RF(Unempl, F_MARX, poos, horizons, ntrees) # 
-RF_MAF_MARX_forecast <- Forecasting_function_RF(Unempl, MAF_MARX, poos, horizons, ntrees) # 
-RF_X_F_MAF_forecast <- Forecasting_function_RF(Unempl, X_F_MAF, poos, horizons, ntrees) # 
-RF_X_F_MARX_forecast <- Forecasting_function_RF(Unempl, X_F_MARX, poos, horizons, ntrees) # 
-RF_X_MAF_MARX_forecast <- Forecasting_function_RF(Unempl, X_MAF_MARX, poos, horizons, ntrees) #
-RF_F_MAF_MARX_forecast <- Forecasting_function_RF(Unempl, F_MAF_MARX, poos, horizons, ntrees) #
-RF_X_F_MAF_MARX_forecast <- Forecasting_function_RF(Unempl, X_F_MAF_MARX, poos, horizons, ntrees) #
-
-
+     
 
 # ---- XGB Forecast ----
 
@@ -99,7 +92,7 @@ XGB_X_F_forecast <- Forecasting_function_XGB(Unempl, X_F, poos, horizons) #
 XGB_X_MAF_forecast <- Forecasting_function_XGB(Unempl, X_MAF, poos, horizons) # 
 XGB_X_MARX_forecast <- Forecasting_function_XGB(Unempl, X_MARX, poos, horizons) # 
 XGB_F_MAF_forecast <- Forecasting_function_XGB(Unempl, F_MAF, poos, horizons) # 
-XGB_F_MARX_forecast <- Forecasting_function_XGB(Unempl, F_MARX, poos, horizons) # 
+XGB_F_MARX_forecast <- Forecasting_function_XGB(Unempl, F_MARX, poos, horizons) #  
 XGB_MAF_MARX_forecast <- Forecasting_function_XGB(Unempl, MAF_MARX, poos, horizons) # 
 XGB_X_F_MAF_forecast <- Forecasting_function_XGB(Unempl, X_F_MAF, poos, horizons) # 
 XGB_X_F_MARX_forecast <- Forecasting_function_XGB(Unempl, X_F_MARX, poos, horizons) # 
@@ -107,4 +100,20 @@ XGB_X_MAF_MARX_forecast <- Forecasting_function_XGB(Unempl, X_MAF_MARX, poos, ho
 XGB_F_MAF_MARX_forecast <- Forecasting_function_XGB(Unempl, F_MAF_MARX, poos, horizons) #
 XGB_X_F_MAF_MARX_forecast <- Forecasting_function_XGB(Unempl, X_F_MAF_MARX, poos, horizons) #
 
-sqrt(mean((XGB_X_forecast[,1]-y_real)^2))
+shift_y = as.data.frame(shift(Unempl,n=3, type = 'lead', give.names=TRUE))
+colnames(shift_y) = 'y'
+
+Z <- X_F_MAF_MARX
+
+y_Z <- na.omit(cbind(shift_y, Z))
+
+xgb_fi_test <- xgboost(eta = 0.2,
+                       label = shift_y,
+                      data = Z,
+                      nrounds = 200,
+                      max.depth = 3, # Dit is misschien wel laag voor XGB? 
+                      eval_metric = "rmse",
+                      verbose = 0)
+
+for (i in 1:5){print(paste("RMSE Horizon ", i," : ",sqrt(mean((RF_X_forecast[,i]-y_real)^2))))}
+sqrt(mean((RF_X_forecast[,1]-y_real)^2))
