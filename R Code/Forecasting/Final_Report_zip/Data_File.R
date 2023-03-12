@@ -11,7 +11,7 @@ library(lubridate)
 library(dplyr)
 library(yahoofinancer)
 
-source("Function_File.r")
+#source("Function_File.r")
 
 ## ---- DATA ---- CBS
 
