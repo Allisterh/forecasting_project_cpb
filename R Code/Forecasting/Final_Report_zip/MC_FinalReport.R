@@ -1,3 +1,4 @@
+#### ---- Marginal Contributions ----
 #Clearing Environment
 rm(list=ls())
 
@@ -234,7 +235,6 @@ for (f in 1:length(horizons)){
 Marginal_allhorizons_RF_Small$Feature <- as.factor(Marginal_allhorizons_RF_Small$Feature)
 
 # - Grid Arrange -  
-#colors = c("F"= "#845EC2", "MAF" = "#00C9A7", "MARX" = "#009EFA")
 colors <- c("F"= "#FF0000FF", "MAF"= "#CCFF00FF", "MARX"= "#00FF66FF", "SSA"= "#0066FFFF")
 size_title <- 10
 
@@ -305,7 +305,6 @@ for (f in 1:length(horizons)){
 Marginal_allhorizons_RF_Big$Feature <- as.factor(Marginal_allhorizons_RF_Big$Feature)
 
 # - Grid Arrange -  
-#colors = c("F"= "#845EC2", "MAF" = "#00C9A7", "MARX" = "#009EFA")
 colors <- c("F"= "#FF0000FF", "MAF"= "#CCFF00FF", "MARX"= "#00FF66FF", "SSA"= "#0066FFFF")
 size_title <- 10
 
@@ -376,7 +375,6 @@ for (f in 1:length(horizons)){
 Marginal_allhorizons_XGB_Small$Feature <- as.factor(Marginal_allhorizons_XGB_Small$Feature)
 
 # - Grid Arrange -  
-#colors = c("F"= "#845EC2", "MAF" = "#00C9A7", "MARX" = "#009EFA")
 colors <- c("F"= "#FF0000FF", "MAF"= "#CCFF00FF", "MARX"= "#00FF66FF", "SSA"= "#0066FFFF")
 size_title <- 10
 
@@ -447,7 +445,6 @@ for (f in 1:length(horizons)){
 Marginal_allhorizons_XGB_Big$Feature <- as.factor(Marginal_allhorizons_XGB_Big$Feature)
 
 # - Grid Arrange -  
-#colors = c("F"= "#845EC2", "MAF" = "#00C9A7", "MARX" = "#009EFA")
 colors <- c("F"= "#FF0000FF", "MAF"= "#CCFF00FF", "MARX"= "#00FF66FF", "SSA"= "#0066FFFF")
 size_title <- 10
 

@@ -23,8 +23,6 @@ source("Function_File.r")
 source("Data_File.r")
 
 # If you use the small dataset: only cpb.infl.stationary
-
-
 # If big dataset: combine cpb.infl.stationary and additional.data.stationary
 
 # Define stationary dataframes

@@ -12,13 +12,8 @@ library(tidyverse)
 
 source("Function_File.r")
 
-# If you use the small dataset: only cpb.infl.stationary
 df_cpb_infl_stat <- read.csv("Extra data/data_core.csv")
-#df_cpb <- read.csv("data-eur2023.csv", row.names = 1)
 df_additional_stat <- read.csv("Extra data/data_additional.csv")
-#Unempl <- df_cpb$L2_LRHUTTTT
-
-#df_small <- df_cpb_infl_stat
 
 # If big dataset: combine cpb.infl.stationary and additional.data.stationary
 df_big <- cbind(df_cpb_infl_stat[50:433,], df_additional_stat)
@@ -101,19 +96,16 @@ Forecasting_function_XGB <- function(y, Z, n_forecast, horizons){
       
       if(f==1 || f%%24==0 & f!= 120){
         
-        # specifying the CV technique which will be passed into the train() function later 
-        #and number parameter is the "k" in K-fold cross validation
         train_control = trainControl(method = "cv", number = 5, search = "grid")
         
         set.seed(2023)
         
         trainyx <- cbind(train_y, train_x)
-        #print(trainyx)
         
         # Customising the tuning grid
-        gbmGrid <-  expand.grid(max_depth = 6, #Need sources to back up these numbers
-                                nrounds = c(50, 100, 200, 500), #Need sources to back up these numbers    # number of trees
-                                eta = c(0.01, 0.1, 0.3), # Need sources to back up these numbers
+        gbmGrid <-  expand.grid(max_depth = 6,
+                                nrounds = c(50, 100, 200, 500), 
+                                eta = c(0.01, 0.1, 0.3), 
                                 gamma = 0, #default
                                 subsample = 1, #default
                                 min_child_weight = 1, #default

@@ -1,3 +1,5 @@
+#### ---- Variable Importance Measures (RF) ----
+
 #Clearing Environment
 rm(list=ls())
 
@@ -755,10 +757,10 @@ T <- nrow(regressor_matrix)
 
 # -- Parameter initalizations for feature matrix --
 X_lags <- 12 # We use the data up until one year before
-n_Factors <- 5 # 
+n_Factors <- 8 # Coulombe (BIG DATA) 
 F_lags <- 12 # Same reason as X, also because Coulombe
 P_MAF <- 12 # Summarize data up until one year 
-n_MAF <- 2 #  
+n_MAF <- 2 # Coulombe
 P_MARX <- 12 # Lags for MARX, same as X_lags, also Coulombe 
 
 # -- Make feature matrices --
@@ -827,7 +829,6 @@ VI_function <- function(y_differenced, Z, poos, horizons, ntrees){
                          na.action = na.omit)
     
     importance[,i] <- caret::varImp(X.rf, conditional=TRUE) # conditional=True, adjusts for correlations between predictors
-    
     print(Sys.time()-nu)
   }
   return(importance) #returns VI. columns: horizons, rows: VI calculated for according column in Z
@@ -837,6 +838,7 @@ VI_function <- function(y_differenced, Z, poos, horizons, ntrees){
 two_feature_importance <- function(feature1, feature2, poos, horizons, ntrees){
   Z <- cbind(feature1, feature2)
   allvarimp <- VI_function(y_differenced, Z, poos, horizons, ntrees)  #output is a matrix of VI values. columns: horizons, rows: VI of given column in the feature matrix (Z)
+  print(allvarimp)
   f1_imp <- allvarimp[1:(ncol(feature1)),] #select VI for first feature. Example: X has 104 columns. Hence, select in VI matrix the first 104 rows.
   f1_imp <- colSums(f1_imp) / ncol(feature1) #Reweight: sum the individual series calculated one line above. divide by the number of columns of that feature.
   #Hence, if a feature has a larger fraction of Z, it is downweighted --> relative measure: total feature VI per column.

@@ -124,10 +124,6 @@ Forecasting_function_RF <- function(y, Z, n_forecast, horizons, ntrees){
     nu <- Sys.time()
     
     for (f in 1:n_forecast){
-  
-      #print(y_Z[(P_MAF+1):315+f-1,])
-      #y_Z_train <- y_Z[(P_MAF+1):(start_forecast+f-h-1),] # training set one less than test set: Z_316-h-1 (f=1)
-      #y_Z_test <- y_Z[(start_forecast+f-h),] # prediction must start at Y_316. test set is therefore Z_316-h (f=1)
       
       y_Z_train <- y_Z[1:(nrow(y_Z)-poos)+f-1,] # training set one less than test set: Z_316-h-1 (f=1)
       y_Z_test <- y_Z[(nrow(y_Z)-poos)+f,] # prediction must start at Y_316. test set is therefore Z_316-h (f=1)
@@ -137,8 +133,8 @@ Forecasting_function_RF <- function(y, Z, n_forecast, horizons, ntrees){
                            data = y_Z_train, 
                            ntree = ntrees, 
                            mtry = (ncol(Z)/3),
-                           na.action = na.omit) # Paper Coulombe (Appendix): ntree=200, mtry=#Z/3
-      RF_y_forecast[f,i] <- predict(X.rf, y_Z_test) #predicts y given Z_test
+                           na.action = na.omit) 
+      RF_y_forecast[f,i] <- predict(X.rf, y_Z_test) 
       print(f)
     }
     colnames(RF_y_forecast)[i]=paste('h=',h,sep='')
@@ -183,7 +179,6 @@ Forecasting_function_XGB <- function(y, Z, n_forecast, horizons){
 
     for (f in 1:n_forecast){
       # Boosted Trees
-      #print(f)
       train <- y_Z[1:(nrow(y_Z)-n_forecast+f-1),]
       test <- y_Z[nrow(y_Z)-n_forecast+f,]
       
@@ -212,7 +207,7 @@ Forecasting_function_XGB <- function(y, Z, n_forecast, horizons){
 	X_BT_tuned <- xgboost(eta = optimizedeta,
                             data = as.matrix(train),
                             nrounds = optimizednrounds,
-                            max.depth = optimizedmax_depth, # Dit is misschien wel laag voor XGB? 
+                            max.depth = optimizedmax_depth, 
                             eval_metric = "rmse",
                             verbose = 0)
       
@@ -224,7 +219,7 @@ Forecasting_function_XGB <- function(y, Z, n_forecast, horizons){
   return(BT_y_forecast)
 }
 
-#### ---- BULLSHIT BUT STILL NICE TO HAVE ----
+#### ---- Check ----
 
 Find_rmse <- function(){
   All_rmse_goodfactors <- data.frame(matrix(ncol = length(horizons), nrow = 8*12*12))
